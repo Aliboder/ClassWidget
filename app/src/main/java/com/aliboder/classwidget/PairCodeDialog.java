@@ -49,6 +49,10 @@ public class PairCodeDialog extends Dialog {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dialog_pair_code);
 
+        // 浅色模式下卡片背景换成白底
+        findViewById(R.id.pc_root).setBackgroundResource(
+                Theme.isDark(getContext()) ? R.drawable.pair_sheet : R.drawable.pair_sheet_light);
+
         cells[0] = findViewById(R.id.pc_cell1);
         cells[1] = findViewById(R.id.pc_cell2);
         cells[2] = findViewById(R.id.pc_cell3);

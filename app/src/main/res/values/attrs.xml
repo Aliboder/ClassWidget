@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主题色属性（2026-11-10 浅色模式）：
+         布局里统一写成 ?attr/colorXxx，AppTheme.Dark / AppTheme.Light 各赋一套值。
+         ⛔ 页面里不要再直接写 @color/page_bg 这类固定色 —— 否则切主题时它不会变。 -->
+    <attr name="colorPageBg" format="color" />
+    <attr name="colorSurface" format="color" />
+    <attr name="colorSurfaceHigh" format="color" />
+    <attr name="colorStroke" format="color" />
+    <attr name="colorTextPrimary" format="color" />
+    <attr name="colorTextSecondary" format="color" />
+    <attr name="colorTextTertiary" format="color" />
+    <attr name="colorAccent" format="color" />
+    <attr name="colorAccentDim" format="color" />
+    <attr name="colorDanger" format="color" />
+    <attr name="colorSheet" format="color" />
+</resources>

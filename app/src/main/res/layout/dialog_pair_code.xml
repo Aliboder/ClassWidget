@@ -14,7 +14,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="输入配对码"
-        android:textColor="#FFF2F5F8"
+        android:textColor="?attr/colorTextPrimary"
         android:textSize="19sp"
         android:textStyle="bold" />
 
@@ -25,7 +25,7 @@
         android:layout_marginTop="6dp"
         android:lineSpacingExtra="2dp"
         android:text="在课表小程序里「周程 → 导出日历」生成后点一下复制，这里会自动填入"
-        android:textColor="#FF6B7480"
+        android:textColor="?attr/colorTextTertiary"
         android:textSize="12sp" />
 
     <!-- 6 个格子（纯展示）+ 透明 EditText（承接系统键盘） -->
@@ -69,7 +69,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:textColor="#FFE5484D"
+        android:textColor="?attr/colorDanger"
         android:textSize="12sp"
         android:visibility="gone" />
 
@@ -92,6 +92,6 @@
         android:layout_marginTop="6dp"
         android:gravity="center"
         android:text="取消"
-        android:textColor="#FF8D95A3"
+        android:textColor="?attr/colorTextTertiary"
         android:textSize="14sp" />
 </LinearLayout>
