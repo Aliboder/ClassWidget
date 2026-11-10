@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">课表组件</string>
+    <string name="widget_label">课表</string>
+    <string name="pick_file">选择 .ics 文件</string>
+    <string name="refresh_widget">刷新组件</string>
+    <string name="preview_widget">预览组件（不用加到桌面）</string>
+    <string name="hint">选一个 .ics 文件导入；之后桌面长按 → 小部件 → 课表。重新导入会覆盖旧数据。</string>
+    <string name="no_data">还没有数据，先选一个 .ics 文件</string>
+    <string name="no_widget">桌面上还没有添加「课表」小部件</string>
+</resources>

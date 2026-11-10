@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pc_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/pair_sheet"
+    android:orientation="vertical"
+    android:paddingStart="20dp"
+    android:paddingTop="22dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="输入配对码"
+        android:textColor="#FFF2F5F8"
+        android:textSize="19sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/pc_tip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:lineSpacingExtra="2dp"
+        android:text="在课表小程序里「周程 → 导出日历」生成后点一下复制，这里会自动填入"
+        android:textColor="#FF6B7480"
+        android:textSize="12sp" />
+
+    <!-- 6 个格子（纯展示）+ 透明 EditText（承接系统键盘） -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView android:id="@+id/pc_cell1" style="@style/PairCell" />
+            <TextView android:id="@+id/pc_cell2" style="@style/PairCell" />
+            <TextView android:id="@+id/pc_cell3" style="@style/PairCell" />
+            <TextView android:id="@+id/pc_cell4" style="@style/PairCell" />
+            <TextView android:id="@+id/pc_cell5" style="@style/PairCell" />
+            <TextView android:id="@+id/pc_cell6" style="@style/PairCell" />
+        </LinearLayout>
+
+        <!-- 覆盖在格子上的输入层：完全透明、无光标，点哪都能唤起系统键盘 -->
+        <EditText
+            android:id="@+id/pc_input"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:cursorVisible="false"
+            android:gravity="center"
+            android:imeOptions="actionDone"
+            android:importantForAutofill="no"
+            android:inputType="number"
+            android:maxLength="6"
+            android:textColor="@android:color/transparent"
+            android:textSize="24sp" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/pc_error"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:textColor="#FFE5484D"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/pc_ok"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_btn_primary"
+        android:gravity="center"
+        android:text="获取课表"
+        android:textColor="#FF04120E"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/pc_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:text="取消"
+        android:textColor="#FF8D95A3"
+        android:textSize="14sp" />
+</LinearLayout>

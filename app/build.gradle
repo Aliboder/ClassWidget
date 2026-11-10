@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+}
+
+/* ============================================================
+ * 版本号规则（2026-11-10 定）
+ *
+ * versionCode = YYMMDD × 100 + 当天序号
+ *   · 可读：一眼看出是哪天打的包（261110 表示 2026-11-10）
+ *   · 单调递增：日期在涨，所以永远不会比已装的旧版本小
+ *   · 远小于上限：Android 的 versionCode 上限 2147483647，
+ *     26111001 才 2600 万，够用很久
+ *
+ * 为什么必须递增：用户是用「下载链接 → 安装」覆盖安装的，
+ * versionCode 不涨，部分 ROM 会直接拒绝（提示「应用未安装」）。
+ *
+ * 一天要发两版时，加 -PbuildSeq=2 即可（默认 1）：
+ *   ./gradlew assembleDebug -PbuildSeq=2
+ * ============================================================ */
+def buildDateCode = (new Date().format('yyMMdd')) as int
+def buildSeq = (project.findProperty('buildSeq') ?: '1') as int
+def autoVersionCode = buildDateCode * 100 + buildSeq
+
+android {
+    namespace 'com.aliboder.classwidget'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.aliboder.classwidget"
+        minSdk 24
+        targetSdk 34
+        versionCode autoVersionCode
+        versionName "5.1"
+        archivesBaseName = "classwidget-" + autoVersionCode
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+}

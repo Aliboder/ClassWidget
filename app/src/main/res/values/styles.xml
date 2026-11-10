@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 配对码数字格：等宽、居中、圆角 -->
+    <style name="PairCell">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">54dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">3dp</item>
+        <item name="android:layout_marginEnd">3dp</item>
+        <item name="android:background">@drawable/pair_cell</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">#FFF2F5F8</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <!-- 配对码键盘键：三列均分 -->
+    <style name="PairKey">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">50dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_margin">3dp</item>
+        <item name="android:background">@drawable/pair_key</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">#FFF2F5F8</item>
+        <item name="android:textSize">19sp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+</resources>
