@@ -82,9 +82,12 @@ public class PreviewActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Theme.apply(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_preview);
 
+        findViewById(R.id.preview_stage).setBackgroundResource(
+                Theme.isDark(this) ? R.drawable.preview_stage : R.drawable.preview_stage_light);
         host = findViewById(R.id.preview_host);
         info = findViewById(R.id.preview_info);
         txtDirty = findViewById(R.id.txt_dirty);
@@ -210,6 +213,23 @@ public class PreviewActivity extends Activity {
             }
         });
 
+        // 主题：跟随系统 / 浅色 / 深色（切完要 recreate 才能换掉当前界面的主题）
+        int[] themeIds = {R.id.theme_auto, R.id.theme_light, R.id.theme_dark};
+        for (int i = 0; i < themeIds.length; i++) {
+            final int mode = i;
+            findViewById(themeIds[i]).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (Theme.mode(PreviewActivity.this) == mode) {
+                        return;
+                    }
+                    Theme.setMode(PreviewActivity.this, mode);
+                    ScheduleWidgetProvider.refreshAll(PreviewActivity.this);
+                    recreate();
+                }
+            });
+        }
+
         // 刷新频率
         findViewById(R.id.refresh_smart).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_SMART));
         findViewById(R.id.refresh_saver).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_SAVER));
@@ -229,7 +249,7 @@ public class PreviewActivity extends Activity {
             }
         });
 
-        showPresetSelection(-1);
+        refreshChoiceStyles();
         showRefreshMode();
         render();
     }
@@ -299,6 +319,7 @@ public class PreviewActivity extends Activity {
         paintChipGroup(new int[]{R.id.time_24, R.id.time_12}, WidgetPrefs.hour24(this) ? 0 : 1);
         paintChipGroup(new int[]{R.id.refresh_smart, R.id.refresh_saver, R.id.refresh_frequent},
                 WidgetPrefs.refreshMode(this));
+        paintChipGroup(new int[]{R.id.theme_auto, R.id.theme_light, R.id.theme_dark}, Theme.mode(this));
         // 强调色选中环
         LinearLayout row = findViewById(R.id.accent_row);
         int sel = WidgetPrefs.accentIndex(this);
@@ -315,6 +336,29 @@ public class PreviewActivity extends Activity {
         }
     }
 
+    /** 浅色模式下这些块的底色要换（深色底在白页面上会脏） */
+    private int presetBg(boolean on) {
+        if (on) return R.drawable.bg_preset_on;
+        return Theme.isDark(this) ? R.drawable.bg_preset : R.drawable.bg_preset_light;
+    }
+
+    private int chipBg(boolean on) {
+        if (on) return R.drawable.bg_chip_on;
+        return Theme.isDark(this) ? R.drawable.bg_chip : R.drawable.bg_chip_light;
+    }
+
+    /** 强调色在浅底上偏淡，压深一档再当文字色用 */
+    private int onAccentText() {
+        int a = WidgetPrefs.accentColor(this);
+        if (Theme.isDark(this)) {
+            return a;
+        }
+        int r = (int) (((a >> 16) & 0xFF) * 0.62f);
+        int g = (int) (((a >> 8) & 0xFF) * 0.62f);
+        int b = (int) ((a & 0xFF) * 0.62f);
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
+    }
+
     private void paintChipGroup(int[] ids, int selected) {
         for (int i = 0; i < ids.length; i++) {
             TextView tv = findViewById(ids[i]);
@@ -322,8 +366,8 @@ public class PreviewActivity extends Activity {
                 continue;
             }
             boolean on = (i == selected);
-            tv.setBackgroundResource(on ? R.drawable.bg_chip_on : R.drawable.bg_chip);
-            tv.setTextColor(on ? WidgetPrefs.accentColor(this) : 0xFFB8BFCB);
+            tv.setBackgroundResource(chipBg(on));
+            tv.setTextColor(on ? onAccentText() : Theme.textSecondary(this));
         }
     }
 
@@ -392,8 +436,8 @@ public class PreviewActivity extends Activity {
         for (int i = 0; i < PRESET_IDS.length; i++) {
             TextView tv = findViewById(PRESET_IDS[i]);
             boolean on = (i == index);
-            tv.setBackgroundResource(on ? R.drawable.bg_preset_on : R.drawable.bg_preset);
-            tv.setTextColor(on ? WidgetPrefs.accentColor(this) : 0xFFB8BFCB);
+            tv.setBackgroundResource(presetBg(on));
+            tv.setTextColor(on ? onAccentText() : Theme.textSecondary(this));
         }
     }
 

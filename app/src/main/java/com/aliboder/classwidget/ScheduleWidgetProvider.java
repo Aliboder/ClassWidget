@@ -217,7 +217,23 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
 
         rv.setInt(R.id.w_frame, "setBackgroundResource",
                 alpha <= 0 ? R.drawable.round_blank : WidgetBgs.round(rootRadius));
-        rv.setInt(R.id.w_root, "setBackgroundColor", argb(alpha, 0x15, 0x15, 0x1A));
+        // 浅色：根背景用白，深色：沿用原来的深灰
+        boolean dark = Theme.isDark(context);
+        rv.setInt(R.id.w_root, "setBackgroundColor", dark
+                ? argb(alpha, 0x15, 0x15, 0x1A)
+                : argb(alpha, 0xFF, 0xFF, 0xFF));
+        // 浅色模式下把文字染深（RemoteViews 拿不到 ?attr，只能逐个覆盖）
+        if (!dark) {
+            rv.setTextColor(R.id.w_date, 0xFF14171B);
+            rv.setTextColor(R.id.w_weekday, 0xFF4A525C);
+            for (int i = 0; i < MAX_CARDS; i++) {
+                rv.setTextColor(TITLES[i], 0xFF14171B);
+                rv.setTextColor(METAS[i], 0xFF4A525C);
+                rv.setTextColor(TEACHERS[i], 0xFF4A525C);
+                rv.setTextColor(TAGS[i], 0xFF5A636D);
+            }
+        }
+
         float titleSp = 14.5f * scale;
         float pillSp = 9.5f * scale;
         float metaSp = 10.5f * scale;
@@ -289,7 +305,9 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
                 }
                 rv.setInt(FRAMES[i], "setBackgroundResource",
                         cardAlpha <= 0 ? R.drawable.round_blank : WidgetBgs.round(radius));
-                rv.setInt(CARD_IDS[i], "setBackgroundColor", argb(cardAlpha, 0x1E, 0x22, 0x26));
+                rv.setInt(CARD_IDS[i], "setBackgroundColor", dark
+                        ? argb(cardAlpha, 0x1E, 0x22, 0x26)
+                        : argb(cardAlpha, 0xFF, 0xFF, 0xFF));
                 rv.setViewVisibility(STARTS[i], View.VISIBLE);
 
                 rv.setTextViewTextSize(STARTS[i], TypedValue.COMPLEX_UNIT_DIP, pillSp);

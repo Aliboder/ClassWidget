@@ -39,11 +39,6 @@ public class MainActivity extends Activity {
     private static final int REQ_PICK = 1001;
     private static final long DAY_MS = 24L * 3600L * 1000L;
 
-    private static final int C_TITLE = 0xFFE9EDF0;
-    private static final int C_META = 0xFFA8B2BC;
-    private static final int C_DIM = 0xFF6B7480;
-    private static final int C_GREEN = 0xFF3FD3AC;
-
     private final SimpleDateFormat dayKeyFmt = new SimpleDateFormat("yyyyMMdd", Locale.CHINA);
     private final SimpleDateFormat dateFmt = new SimpleDateFormat("M月d日", Locale.CHINA);
     private final SimpleDateFormat weekFmt = new SimpleDateFormat("EEE", Locale.CHINA);
@@ -63,6 +58,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Theme.apply(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -112,6 +108,16 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
+        // 顶栏三个图标按主题染色（矢量图里写死的是深色模式的浅灰）
+        int iconTint = Theme.textSecondary(this);
+        int[] iconIds = {R.id.btn_refresh, R.id.btn_style, R.id.btn_more};
+        for (int id : iconIds) {
+            android.widget.ImageView iv = findViewById(id);
+            if (iv != null) {
+                iv.setColorFilter(iconTint);
+            }
+        }
+
         findViewById(R.id.btn_more).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -158,7 +164,7 @@ public class MainActivity extends Activity {
             TextView row = new TextView(this);
             row.setText(items[i]);
             row.setTextSize(15);
-            row.setTextColor(0xFFF2F5F8);
+            row.setTextColor(cTextPrimary());
             row.setGravity(android.view.Gravity.CENTER_VERTICAL);
             row.setPadding(dp(18), dp(16), dp(18), dp(16));
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -183,7 +189,7 @@ public class MainActivity extends Activity {
         TextView cancel = new TextView(this);
         cancel.setText("取消");
         cancel.setTextSize(14);
-        cancel.setTextColor(0xFF8D95A3);
+        cancel.setTextColor(cTextTertiary());
         cancel.setGravity(android.view.Gravity.CENTER);
         cancel.setPadding(0, dp(14), 0, dp(14));
         LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
@@ -535,7 +541,7 @@ public class MainActivity extends Activity {
                     ? "收起过去 " + Math.max(1, days) + " 天  ▴"
                     : "过去 " + Math.max(1, days) + " 天  ▾");
             toggle.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(24));
-            toggle.setTextColor(C_DIM);
+            toggle.setTextColor(cTextTertiary());
             LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, rpx(66));
             toggle.setLayoutParams(tlp);
@@ -609,6 +615,15 @@ public class MainActivity extends Activity {
     }
 
     /** 段头：11月8日 | 周日 [今天] ………… 2 节 */
+    /* ---- 时间线配色：浅色/深色各一套（代码画的 View 不能靠 ?attr） ---- */
+    private int cTextPrimary() { return Theme.textPrimary(this); }
+    private int cTextSecondary() { return Theme.textSecondary(this); }
+    private int cTextTertiary() { return Theme.textTertiary(this); }
+    private int cAccent() { return WidgetPrefs.accentColor(this); }
+    private int cTagCourse() { return Theme.isDark(this) ? 0xFF9FE8D1 : 0xFF0E8C6D; }
+    private int cTagExam() { return Theme.isDark(this) ? 0xFFFFB4AB : 0xFFC62828; }
+    private int cTagSchedule() { return Theme.isDark(this) ? 0xFFB8BFCB : 0xFF5A636D; }
+
     private View dayHeader(long millis, boolean today, int count) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -618,7 +633,7 @@ public class MainActivity extends Activity {
         TextView date = new TextView(this);
         date.setText(dateFmt.format(new Date(millis)));
         date.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(34));
-        date.setTextColor(today ? C_GREEN : C_TITLE);
+        date.setTextColor(today ? cAccent() : cTextPrimary());
         date.setTypeface(null, Typeface.BOLD);
         date.setIncludeFontPadding(false);
         row.addView(date);
@@ -626,7 +641,7 @@ public class MainActivity extends Activity {
         TextView sep = new TextView(this);
         sep.setText("|");
         sep.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(22));
-        sep.setTextColor(today ? 0x883FD3AC : C_DIM);
+        sep.setTextColor(today ? 0x883FD3AC : cTextTertiary());
         sep.setIncludeFontPadding(false);
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -638,12 +653,12 @@ public class MainActivity extends Activity {
         TextView weekday = new TextView(this);
         weekday.setText(weekFmt.format(new Date(millis)));
         weekday.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(30));
-        weekday.setTextColor(today ? 0xCC3FD3AC : C_META);
+        weekday.setTextColor(today ? 0xCC3FD3AC : cTextSecondary());
         weekday.setIncludeFontPadding(false);
         row.addView(weekday);
 
         if (today) {
-            TextView chip = smallTag("今天", C_GREEN, R.drawable.tag_on, 20, 12);
+            TextView chip = smallTag("今天", cAccent(), R.drawable.tag_on, 20, 12);
             LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT, rpx(32));
             clp.leftMargin = rpx(10);
@@ -658,7 +673,7 @@ public class MainActivity extends Activity {
         TextView cnt = new TextView(this);
         cnt.setText(count + " 节");
         cnt.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(24));
-        cnt.setTextColor(C_DIM);
+        cnt.setTextColor(cTextTertiary());
         cnt.setIncludeFontPadding(false);
         row.addView(cnt);
 
@@ -675,7 +690,7 @@ public class MainActivity extends Activity {
         View dot = new View(this);
         GradientDrawable dotBg = new GradientDrawable();
         dotBg.setShape(GradientDrawable.OVAL);
-        dotBg.setColor(C_GREEN);
+        dotBg.setColor(cAccent());
         dot.setBackground(dotBg);
         LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(rpx(12), rpx(12));
         dlp.rightMargin = rpx(12);
@@ -690,7 +705,7 @@ public class MainActivity extends Activity {
         TextView txt = new TextView(this);
         txt.setText("现在 " + timeFmt.format(new Date(now)));
         txt.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(22));
-        txt.setTextColor(C_GREEN);
+        txt.setTextColor(cAccent());
         txt.setIncludeFontPadding(false);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -765,7 +780,7 @@ public class MainActivity extends Activity {
         TextView start = new TextView(this);
         start.setText(e.allDay ? "全天" : timeFmt.format(new Date(e.start)));
         start.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(22));
-        start.setTextColor(0xFFFFFFFF);
+        start.setTextColor(cTextPrimary());
         start.setTypeface(null, Typeface.BOLD);
         start.setGravity(Gravity.CENTER);
         start.setIncludeFontPadding(false);
@@ -779,7 +794,7 @@ public class MainActivity extends Activity {
             TextView end = new TextView(this);
             end.setText(timeFmt.format(new Date(e.end)));
             end.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(22));
-            end.setTextColor(C_META);
+            end.setTextColor(cTextSecondary());
             end.setGravity(Gravity.CENTER);
             end.setIncludeFontPadding(false);
             end.setSingleLine(true);
@@ -818,7 +833,7 @@ public class MainActivity extends Activity {
         TextView title = new TextView(this);
         title.setText(e.title);
         title.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(34));
-        title.setTextColor(past ? 0xFF8A929C : C_TITLE);
+        title.setTextColor(past ? cTextTertiary() : cTextPrimary());
         title.setTypeface(null, Typeface.BOLD);
         title.setIncludeFontPadding(false);
         title.setMaxLines(1);
@@ -831,7 +846,7 @@ public class MainActivity extends Activity {
 
         if (past || ongoing) {
             head.addView(smallTag(ongoing ? "进行中" : "已结束",
-                    ongoing ? C_GREEN : C_META,
+                    ongoing ? cAccent() : cTextSecondary(),
                     ongoing ? R.drawable.tag_on : R.drawable.tag_past, 20, 12));
         }
         // 类型标签（课程 / 考试 / 日程）—— 考试单独用红色，日程用中性色
@@ -840,11 +855,11 @@ public class MainActivity extends Activity {
             kind = "课程";
         }
         if ("考试".equals(kind)) {
-            head.addView(smallTag("考试", 0xFFFFB4AB, R.drawable.tag_past, 22, 18));
+            head.addView(smallTag("考试", cTagExam(), R.drawable.tag_past, 22, 18));
         } else if ("日程".equals(kind)) {
-            head.addView(smallTag("日程", 0xFFB8BFCB, R.drawable.tag_past, 22, 18));
+            head.addView(smallTag("日程", cTextSecondary(), R.drawable.tag_past, 22, 18));
         } else {
-            head.addView(smallTag("课程", 0xFF9FE8D1, R.drawable.tag_on, 22, 18));
+            head.addView(smallTag("课程", cTagCourse(), R.drawable.tag_on, 22, 18));
         }
         body.addView(head);
 
@@ -906,7 +921,7 @@ public class MainActivity extends Activity {
         TextView tv = new TextView(this);
         tv.setText(text);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(24));
-        tv.setTextColor(C_META);
+        tv.setTextColor(cTextSecondary());
         tv.setIncludeFontPadding(false);
         tv.setSingleLine(true);
         tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -938,7 +953,7 @@ public class MainActivity extends Activity {
         TextView head = new TextView(this);
         head.setText("解析诊断");
         head.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(22));
-        head.setTextColor(C_DIM);
+        head.setTextColor(cTextTertiary());
         box.addView(head);
 
         Event first = events.get(0);
@@ -952,7 +967,7 @@ public class MainActivity extends Activity {
                 + "\n教师：" + (first.teacher == null || first.teacher.isEmpty() ? "—「没解析到」" : first.teacher)
                 + "\n原始描述：" + raw);
         body.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(22));
-        body.setTextColor(C_META);
+        body.setTextColor(cTextSecondary());
         body.setLineSpacing(rpx(4), 1f);
         body.setTextIsSelectable(true);
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(

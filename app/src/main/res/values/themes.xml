@@ -1,15 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 主主题：深色、无 ActionBar、状态栏与页面同色 -->
-    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
-        <item name="android:windowBackground">@color/page_bg</item>
-        <item name="android:statusBarColor">@color/page_bg</item>
-        <item name="android:navigationBarColor">@color/page_bg</item>
-        <item name="android:colorAccent">@color/accent</item>
+    <!-- 深色（默认） -->
+    <style name="AppTheme.Dark" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="colorPageBg">#FF0A0B0D</item>
+        <item name="colorSurface">#FF14171B</item>
+        <item name="colorSurfaceHigh">#FF1B1F24</item>
+        <item name="colorStroke">#1FFFFFFF</item>
+        <item name="colorTextPrimary">#FFF2F5F8</item>
+        <item name="colorTextSecondary">#FFA8B0BC</item>
+        <item name="colorTextTertiary">#FF6B7480</item>
+        <item name="colorAccent">#FF3FD3AC</item>
+        <item name="colorAccentDim">#333FD3AC</item>
+        <item name="colorDanger">#FFE5484D</item>
+        <item name="colorSheet">#FF16191D</item>
+
+        <item name="android:windowBackground">?attr/colorPageBg</item>
+        <item name="android:statusBarColor">?attr/colorPageBg</item>
+        <item name="android:navigationBarColor">?attr/colorPageBg</item>
+        <item name="android:colorAccent">?attr/colorAccent</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <!-- 配对码对话框：无标题、透明底、浮动 -->
+    <!-- 浅色 -->
+    <style name="AppTheme.Light" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="colorPageBg">#FFF5F6F8</item>
+        <item name="colorSurface">#FFFFFFFF</item>
+        <item name="colorSurfaceHigh">#FFF0F2F5</item>
+        <item name="colorStroke">#14000000</item>
+        <item name="colorTextPrimary">#FF14171B</item>
+        <item name="colorTextSecondary">#FF4A525C</item>
+        <item name="colorTextTertiary">#FF8A929C</item>
+        <item name="colorAccent">#FF12A07D</item>
+        <item name="colorAccentDim">#3312A07D</item>
+        <item name="colorDanger">#FFD93B3F</item>
+        <item name="colorSheet">#FFFFFFFF</item>
+
+        <item name="android:windowBackground">?attr/colorPageBg</item>
+        <item name="android:statusBarColor">?attr/colorPageBg</item>
+        <item name="android:navigationBarColor">?attr/colorPageBg</item>
+        <item name="android:colorAccent">?attr/colorAccent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- 默认主题 = 深色（代码会按设置覆盖） -->
+    <style name="AppTheme" parent="AppTheme.Dark" />
+
+    <!-- 配对码 / 通用对话框：透明底，卡片自带背景 -->
     <style name="Theme.PairCodeDialog" parent="@android:style/Theme.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
