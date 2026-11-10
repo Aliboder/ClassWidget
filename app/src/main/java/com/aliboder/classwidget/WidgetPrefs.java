@@ -80,6 +80,37 @@ public final class WidgetPrefs {
         return sp(c).getBoolean("teacher", true);
     }
 
+    /* ---------- 2026-11-10 新增：给用户更大的编辑自由度 ---------- */
+
+    /** 强调色（时间块 / 进度条 / 高亮）。默认主题绿 */
+    public static final int[] ACCENTS = {
+            0xFF3FD3AC, 0xFF4D9BFF, 0xFFB07CFF, 0xFFFF7A9C, 0xFFFFA53D, 0xFF57C7E8
+    };
+
+    public static int accentIndex(Context c) {
+        int i = sp(c).getInt("accent", 0);
+        return (i >= 0 && i < ACCENTS.length) ? i : 0;
+    }
+
+    public static int accentColor(Context c) {
+        return ACCENTS[accentIndex(c)];
+    }
+
+    /** true = 24 小时制（14:40），false = 12 小时制（下午 2:40） */
+    public static boolean hour24(Context c) {
+        return sp(c).getBoolean("hour24", true);
+    }
+
+    /** 是否在卡片右上角显示「课程 / 考试 / 日程」标签 */
+    public static boolean showKind(Context c) {
+        return sp(c).getBoolean("showKind", true);
+    }
+
+    /** 卡片间距档位：0=紧凑 1=标准 2=宽松 */
+    public static int cardGap(Context c) {
+        return sp(c).getInt("cardGap", 1);
+    }
+
     /** 组件第一次渲染时把桌面给的尺寸记下来，供预览页对照 */
     public static void recordSize(Context c, int wDp, int hDp) {
         sp(c).edit().putInt("lastW", wDp).putInt("lastH", hDp)

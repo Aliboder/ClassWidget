@@ -33,6 +33,7 @@ public final class EventStore {
                 o.put("s", e.start);
                 o.put("e", e.end);
                 o.put("a", e.allDay ? 1 : 0);
+        o.put("k", e.kind);
                 arr.put(o);
             }
             JSONObject root = new JSONObject();
@@ -76,6 +77,8 @@ public final class EventStore {
                 e.place = o.optString("p", "");
                 e.teacher = o.optString("te", "");
                 e.rawDesc = o.optString("d", "");
+        // 老数据没有 k 字段 → 默认「课程」，与加这个字段之前的表现一致
+        e.kind = o.optString("k", "课程");
                 e.start = o.optLong("s", 0);
                 e.end = o.optLong("e", 0);
                 e.allDay = o.optInt("a", 0) == 1;

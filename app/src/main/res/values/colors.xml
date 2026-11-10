@@ -1,10 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- 组件默认配色（用户在「编辑样式」里可调，这几个是出厂值） -->
     <color name="widget_bg">#EE15151A</color>
     <color name="widget_text">#FFF2F4F8</color>
     <color name="widget_text_dim">#8D95A3</color>
     <color name="widget_text_mid">#B8BFCB</color>
-    <color name="accent">#FF4D84FF</color>
-    <color name="green">#FF3FD3AC</color>
-    <color name="page_bg">#FF0B0C10</color>
+
+    <!-- 设计 token（2026-11-10 重构）：页面只用这几档，别再散写字面色 -->
+    <color name="page_bg">#FF0A0B0D</color>
+    <color name="surface">#FF14171B</color>
+    <color name="surface_high">#FF1B1F24</color>
+    <color name="stroke">#1FFFFFFF</color>
+
+    <color name="text_primary">#FFF2F5F8</color>
+    <color name="text_secondary">#FFA8B0BC</color>
+    <color name="text_tertiary">#FF6B7480</color>
+
+    <color name="accent">#FF3FD3AC</color>
+    <color name="accent_dim">#333FD3AC</color>
+    <color name="danger">#FFE5484D</color>
 </resources>

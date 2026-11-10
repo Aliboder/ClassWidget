@@ -135,6 +135,12 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
     }
 
     /** 这个高度放几个事件 */
+    /** 标签文字：进行中优先，否则显示类型（课程 / 考试 / 日程） */
+    private static String kindLabel(Event e) {
+        String k = e.kind == null ? "" : e.kind.trim();
+        return k.isEmpty() ? "课程" : k;
+    }
+
     /** 图标尺寸档位：跟着字号走，平板/大字号时不会一直是个小点 */
     private static int iconTier(float scale) {
         if (scale < 1.0f) return 1;    // 10dp
@@ -306,7 +312,7 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
                 }
 
                 rv.setTextViewText(TITLES[i], e.title);
-                rv.setTextViewText(TAGS[i], ongoing ? "进行中" : "课程");
+                rv.setTextViewText(TAGS[i], ongoing ? "进行中" : (WidgetPrefs.showKind(context) ? kindLabel(e) : ""));
                 int pct = 0;
                 if (ongoing && e.end > e.start) {
                     pct = (int) Math.max(0, Math.min(100, (now - e.start) * 100L / (e.end - e.start)));

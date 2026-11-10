@@ -50,8 +50,12 @@ public class MainActivity extends Activity {
     private final SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.CHINA);
     private final SimpleDateFormat stampFmt = new SimpleDateFormat("MM-dd HH:mm", Locale.CHINA);
 
-    private TextView status;
-    private TextView statusSub;
+    private TextView heroDate;
+    private TextView heroBadge;
+    private TextView heroTitle;
+    private TextView heroSub;
+    private LinearLayout heroActions;
+    private View onboarding;
     private LinearLayout list;
     private TextView listTitle;
 
@@ -62,15 +66,19 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        status = findViewById(R.id.status);
-        statusSub = findViewById(R.id.status_sub);
+        heroDate = findViewById(R.id.hero_date);
+        heroBadge = findViewById(R.id.hero_badge);
+        heroTitle = findViewById(R.id.hero_title);
+        heroSub = findViewById(R.id.hero_sub);
+        heroActions = findViewById(R.id.hero_actions);
+        onboarding = findViewById(R.id.onboarding);
         list = findViewById(R.id.list);
         listTitle = findViewById(R.id.list_title);
 
         TextView subtitle = findViewById(R.id.subtitle);
         try {
             String vn = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            subtitle.setText("导入 .ics，桌面小部件自动更新 · v" + vn);
+            subtitle.setText("桌面课表 · v" + vn);
         } catch (Exception ignored) {
         }
 
@@ -88,23 +96,32 @@ public class MainActivity extends Activity {
                 showPairDialog();
             }
         });
-        findViewById(R.id.btn_preview).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btn_style).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, PreviewActivity.class));
             }
         });
+        findViewById(R.id.subtitle).setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                showDiagnostics = !showDiagnostics;
+                render();
+                Toast.makeText(MainActivity.this,
+                        showDiagnostics ? "已显示解析诊断" : "已隐藏解析诊断", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+        findViewById(R.id.btn_more).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showMoreMenu(v);
+            }
+        });
         findViewById(R.id.btn_refresh).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int[] ids = AppWidgetManager.getInstance(MainActivity.this).getAppWidgetIds(
-                        new ComponentName(MainActivity.this, ScheduleWidgetProvider.class));
-                if (ids.length == 0) {
-                    Toast.makeText(MainActivity.this, R.string.no_widget, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                ScheduleWidgetProvider.refreshAll(MainActivity.this);
-                Toast.makeText(MainActivity.this, "已刷新 " + ids.length + " 个组件", Toast.LENGTH_SHORT).show();
+                refreshWidget();
             }
         });
     }
@@ -113,6 +130,99 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         render();
+    }
+
+    /**
+     * 顶栏「更多」菜单：自绘深色卡片。
+     * 系统 AlertDialog 会套一层灰白 Material 面板，跟深色 App 割裂得厉害。
+     */
+    private void showMoreMenu(View anchor) {
+        final String[] items = {"导入 .ics 文件", "输入配对码", "刷新桌面组件"};
+        final android.app.Dialog d = new android.app.Dialog(this, R.style.Theme_PairCodeDialog);
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setBackgroundResource(R.drawable.pair_sheet);
+        int pad = dp(8);
+        box.setPadding(pad, pad, pad, pad);
+
+        for (int i = 0; i < items.length; i++) {
+            final int which = i;
+            if (i > 0) {
+                View div = new View(this);
+                div.setBackgroundColor(0x14FFFFFF);
+                LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, 1);
+                div.setLayoutParams(dlp);
+                box.addView(div);
+            }
+            TextView row = new TextView(this);
+            row.setText(items[i]);
+            row.setTextSize(15);
+            row.setTextColor(0xFFF2F5F8);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(18), dp(16), dp(18), dp(16));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            row.setLayoutParams(lp);
+            row.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    d.dismiss();
+                    if (which == 0) {
+                        openPicker();
+                    } else if (which == 1) {
+                        showPairDialog();
+                    } else {
+                        refreshWidget();
+                    }
+                }
+            });
+            box.addView(row);
+        }
+
+        TextView cancel = new TextView(this);
+        cancel.setText("取消");
+        cancel.setTextSize(14);
+        cancel.setTextColor(0xFF8D95A3);
+        cancel.setGravity(android.view.Gravity.CENTER);
+        cancel.setPadding(0, dp(14), 0, dp(14));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        clp.topMargin = dp(10);
+        cancel.setLayoutParams(clp);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                d.dismiss();
+            }
+        });
+        box.addView(cancel);
+
+        d.setContentView(box);
+        android.view.Window w = d.getWindow();
+        if (w != null) {
+            w.setBackgroundDrawableResource(android.R.color.transparent);
+            w.setGravity(android.view.Gravity.CENTER);
+            w.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            w.getDecorView().setPadding(dp(28), 0, dp(28), 0);
+        }
+        d.show();
+    }
+
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+
+    private void refreshWidget() {
+        int[] ids = AppWidgetManager.getInstance(this).getAppWidgetIds(
+                new ComponentName(this, ScheduleWidgetProvider.class));
+        if (ids.length == 0) {
+            Toast.makeText(this, "桌面还没有添加组件", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ScheduleWidgetProvider.refreshAll(this);
+        Toast.makeText(this, "已刷新 " + ids.length + " 个组件", Toast.LENGTH_SHORT).show();
     }
 
     /* ---------------- 导入 ---------------- */
@@ -162,8 +272,9 @@ public class MainActivity extends Activity {
     }
 
     private void importUri(final Uri uri, final String name) {
-        status.setText("正在解析…");
-        statusSub.setText(name);
+        heroTitle.setText("正在解析…");
+        heroSub.setText(name);
+        heroBadge.setVisibility(View.GONE);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -178,8 +289,7 @@ public class MainActivity extends Activity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                status.setText("没解析到日程");
-                                statusSub.setText("确认这是课表导出的 .ics 文件");
+                                Toast.makeText(MainActivity.this, "没解析到日程，确认这是课表导出的 .ics 文件", Toast.LENGTH_LONG).show();
                             }
                         });
                         return;
@@ -198,8 +308,7 @@ public class MainActivity extends Activity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            status.setText("解析失败");
-                            statusSub.setText(String.valueOf(e.getMessage()));
+                            Toast.makeText(MainActivity.this, "解析失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
                     });
                 }
@@ -221,8 +330,9 @@ public class MainActivity extends Activity {
     }
 
     private void importByPairCode(final String code) {
-        status.setText("正在获取配对码 " + code + " …");
-        statusSub.setText("从服务器拉取课表");
+        heroTitle.setText("正在获取…");
+        heroSub.setText("配对码 " + code + "，从服务器拉取课表");
+        heroBadge.setVisibility(View.GONE);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -231,8 +341,7 @@ public class MainActivity extends Activity {
                     @Override
                     public void run() {
                         if (!r.ok) {
-                            status.setText("获取失败");
-                            statusSub.setText(r.message);
+                            Toast.makeText(MainActivity.this, "获取失败：" + r.message, Toast.LENGTH_LONG).show();
                             Toast.makeText(MainActivity.this, r.message, Toast.LENGTH_LONG).show();
                             return;
                         }
@@ -254,8 +363,7 @@ public class MainActivity extends Activity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                status.setText("没解析到日程");
-                                statusSub.setText("配对码对应的课表是空的");
+                                Toast.makeText(MainActivity.this, "配对码对应的课表是空的", Toast.LENGTH_LONG).show();
                             }
                         });
                         return;
@@ -274,8 +382,7 @@ public class MainActivity extends Activity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            status.setText("解析失败");
-                            statusSub.setText(String.valueOf(e.getMessage()));
+                            Toast.makeText(MainActivity.this, "解析失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
                     });
                 }
@@ -288,26 +395,112 @@ public class MainActivity extends Activity {
     private void render() {
         List<Event> events = EventStore.load(this);
         list.removeAllViews();
+
+        long now = System.currentTimeMillis();
+        renderHero(events, now);
+
+        onboarding.setVisibility(events.isEmpty() ? View.VISIBLE : View.GONE);
         if (events.isEmpty()) {
-            status.setText("还没有数据");
-            statusSub.setText("选一个课表导出的 .ics 文件，桌面小部件会自动更新");
             listTitle.setVisibility(View.GONE);
             return;
         }
-
-        String source = EventStore.source(this);
-        long at = EventStore.importedAt(this);
-        status.setText("已载入 " + events.size() + " 条日程");
-        String sub = source.isEmpty() ? "" : "来源 " + source;
-        if (at > 0) {
-            sub = sub.isEmpty() ? "更新于 " + stampFmt.format(new Date(at))
-                    : sub + " · 更新于 " + stampFmt.format(new Date(at));
-        }
-        statusSub.setText(sub.isEmpty() ? "长按桌面空白处可添加小部件" : sub);
         listTitle.setVisibility(View.VISIBLE);
-
         buildTimeline(events);
     }
+
+    /**
+     * 今日概要卡：一屏之内说清「今天几节、现在上什么、下一节是什么」。
+     *
+     * 以前这里是一张只写「已载入 237 条日程」的卡 —— 数据量对用户没意义，
+     * 他真正想知道的是「我今天几点有课」。元信息挪到副标题里，弱一号。
+     */
+    private void renderHero(List<Event> events, long now) {
+        long todayStart = startOfDay(now);
+        String dayLabel = new SimpleDateFormat("M月d日", Locale.CHINA).format(new Date(now))
+                + " " + weekFmt.format(new Date(now));
+        heroDate.setText("今天 · " + dayLabel);
+
+        if (events.isEmpty()) {
+            heroTitle.setText("还没有课表");
+            heroSub.setText("导入教务导出的 .ics，或从小程序拿一个配对码");
+            heroBadge.setVisibility(View.GONE);
+            heroActions.setVisibility(View.VISIBLE);
+            return;
+        }
+
+        heroActions.setVisibility(View.GONE);
+
+        List<Event> today = new ArrayList<>();
+        for (Event e : events) {
+            if (startOfDay(e.start) == todayStart) {
+                today.add(e);
+            }
+        }
+        java.util.Collections.sort(today, new java.util.Comparator<Event>() {
+            @Override
+            public int compare(Event a, Event b) {
+                return Long.compare(a.start, b.start);
+            }
+        });
+
+        Event ongoing = null;
+        Event next = null;
+        for (Event e : today) {
+            if (now >= e.start && now < e.end) {
+                ongoing = e;
+            } else if (e.start > now && next == null) {
+                next = e;
+            }
+        }
+
+        if (ongoing != null) {
+            heroBadge.setVisibility(View.VISIBLE);
+            heroBadge.setText("进行中");
+            heroTitle.setText(ongoing.title);
+            heroSub.setText(timeFmt.format(new Date(ongoing.start)) + "–"
+                    + timeFmt.format(new Date(ongoing.end))
+                    + (ongoing.place.isEmpty() ? "" : " · " + ongoing.place)
+                    + " · 距下课 " + minsText(ongoing.end - now));
+        } else if (next != null) {
+            heroBadge.setVisibility(View.VISIBLE);
+            heroBadge.setText("下一节");
+            heroTitle.setText(next.title);
+            heroSub.setText(timeFmt.format(new Date(next.start)) + " 开始 · "
+                    + minsText(next.start - now) + "后"
+                    + (next.place.isEmpty() ? "" : " · " + next.place));
+        } else if (!today.isEmpty()) {
+            heroBadge.setVisibility(View.GONE);
+            heroTitle.setText("今天的课上完了");
+            heroSub.setText("共 " + today.size() + " 节 · " + events.size() + " 条日程已载入");
+        } else {
+            heroBadge.setVisibility(View.GONE);
+            heroTitle.setText("今天没课");
+            heroSub.setText("共 " + events.size() + " 条日程已载入");
+        }
+
+        // 不再把原始文件名（document:231 这种）摆在概要卡上 —— 用户不关心它从哪个 URI 来
+        long at = EventStore.importedAt(this);
+        if (at > 0) {
+            heroDate.setText("今天 · " + dayLabel + "   更新于 " + stampFmt.format(new Date(at)));
+        }
+    }
+
+    /** 把「还剩多久」说成人话：1 小时 20 分 / 35 分 */
+    private String minsText(long millis) {
+        long min = Math.max(0, millis / 60000);
+        if (min < 1) {
+            return "不到 1 分";
+        }
+        if (min < 60) {
+            return min + " 分";
+        }
+        long h = min / 60;
+        long m = min % 60;
+        return m == 0 ? h + " 小时" : h + " 小时 " + m + " 分";
+    }
+
+    /** 长按标题才显示解析诊断（开发者排查用，普通用户不该看到这坨） */
+    private boolean showDiagnostics = false;
 
     private void buildTimeline(List<Event> events) {
         // 时间线按开始时间升序（IcsParser 已排过，这里再兜一次，防止手工改数据后错乱）
@@ -410,7 +603,9 @@ public class MainActivity extends Activity {
             }
         }
 
-        list.addView(diagnosticCard(events));
+        if (showDiagnostics) {
+            list.addView(diagnosticCard(events));
+        }
     }
 
     /** 段头：11月8日 | 周日 [今天] ………… 2 节 */
@@ -639,7 +834,18 @@ public class MainActivity extends Activity {
                     ongoing ? C_GREEN : C_META,
                     ongoing ? R.drawable.tag_on : R.drawable.tag_past, 20, 12));
         }
-        head.addView(smallTag("课程", 0xFF9FE8D1, R.drawable.tag_on, 22, 18));
+        // 类型标签（课程 / 考试 / 日程）—— 考试单独用红色，日程用中性色
+        String kind = e.kind == null ? "" : e.kind.trim();
+        if (kind.isEmpty()) {
+            kind = "课程";
+        }
+        if ("考试".equals(kind)) {
+            head.addView(smallTag("考试", 0xFFFFB4AB, R.drawable.tag_past, 22, 18));
+        } else if ("日程".equals(kind)) {
+            head.addView(smallTag("日程", 0xFFB8BFCB, R.drawable.tag_past, 22, 18));
+        } else {
+            head.addView(smallTag("课程", 0xFF9FE8D1, R.drawable.tag_on, 22, 18));
+        }
         body.addView(head);
 
         String place = e.place == null ? "" : e.place.trim();

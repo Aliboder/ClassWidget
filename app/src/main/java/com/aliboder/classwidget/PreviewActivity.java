@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +23,10 @@ import java.util.Calendar;
  */
 public class PreviewActivity extends Activity {
 
+    /** 预览按 4×2 画（桌面上实际尺寸由格子决定，这里只求看得清效果） */
+    private static final int PREVIEW_W_DP = 340;
+    private static final int PREVIEW_H_DP = 158;
+
     private static final int MIN_W = 140;
     private static final int MIN_H = 80;
     private static final int MIN_ALPHA = 0;
@@ -35,28 +40,45 @@ public class PreviewActivity extends Activity {
     }
 
     private FrameLayout host;
-    private SeekBar seekW;
-    private SeekBar seekH;
-    private SeekBar seekAlpha;
-    private SeekBar seekFont;
-    private SeekBar seekRadius;
-    private SeekBar seekRadiusRoot;
-    private SeekBar seekAlphaCard;
-    private SeekBar seekCardH;
-    private TextView txtW;
-    private TextView txtH;
-    private TextView txtAlpha;
-    private TextView txtFont;
-    private TextView txtRadius;
-    private TextView txtRadiusRoot;
-    private TextView txtAlphaCard;
-    private TextView txtCardH;
     private TextView info;
-    private CheckBox chkSample;
-    private CheckBox chkPlace;
-    private CheckBox chkTeacher;
-    private CheckBox chkUpcoming;
-    private CheckBox chkClick;
+
+    /** 一行滑杆：标签 + 滑杆 + 数值，绑定逻辑收在这里 */
+    private static final class SliderRow {
+        final SeekBar bar;
+        final TextView label;
+        final TextView value;
+
+        SliderRow(Activity a, int rootId, String labelText) {
+            View root = a.findViewById(rootId);
+            bar = root.findViewById(R.id.slider);
+            label = root.findViewById(R.id.slider_label);
+            value = root.findViewById(R.id.slider_value);
+            label.setText(labelText);
+        }
+    }
+
+    private SliderRow rowAlpha;
+    private SliderRow rowCardAlpha;
+    private SliderRow rowRootRadius;
+    private SliderRow rowCardRadius;
+    private SliderRow rowFont;
+    private SliderRow rowCardHeight;
+
+    /** 有未保存的改动 */
+    private boolean dirty = false;
+    private TextView txtDirty;
+    private TextView btnSave;
+
+    /** 进入页面时的原始值（放弃修改时回滚） */
+    private int origAlpha, origCardAlpha, origFont, origRadius, origRootRadius, origCardH;
+    private int origAccent, origRefresh;
+    private boolean origHour24, origShowKind, origUpcoming, origPlace, origTeacher, origClick;
+
+    private TextView chkUpcoming;
+    private TextView chkPlace;
+    private TextView chkTeacher;
+    private TextView chkKind;
+    private TextView chkClick;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,66 +86,70 @@ public class PreviewActivity extends Activity {
         setContentView(R.layout.activity_preview);
 
         host = findViewById(R.id.preview_host);
-        seekW = findViewById(R.id.seek_w);
-        seekH = findViewById(R.id.seek_h);
-        seekAlpha = findViewById(R.id.seek_alpha);
-        seekFont = findViewById(R.id.seek_font);
-        seekRadius = findViewById(R.id.seek_radius);
-        seekRadiusRoot = findViewById(R.id.seek_radius_root);
-        seekAlphaCard = findViewById(R.id.seek_alpha_card);
-        seekCardH = findViewById(R.id.seek_card_h);
-        txtW = findViewById(R.id.txt_w);
-        txtH = findViewById(R.id.txt_h);
-        txtAlpha = findViewById(R.id.txt_alpha);
-        txtFont = findViewById(R.id.txt_font);
-        txtRadius = findViewById(R.id.txt_radius);
-        txtRadiusRoot = findViewById(R.id.txt_radius_root);
-        txtAlphaCard = findViewById(R.id.txt_alpha_card);
-        txtCardH = findViewById(R.id.txt_card_h);
         info = findViewById(R.id.preview_info);
-        chkSample = findViewById(R.id.chk_sample);
+        txtDirty = findViewById(R.id.txt_dirty);
+        btnSave = findViewById(R.id.btn_save);
+
+        origAlpha = WidgetPrefs.alpha(this);
+        origCardAlpha = WidgetPrefs.cardAlpha(this);
+        origFont = WidgetPrefs.fontPercent(this);
+        origRadius = WidgetPrefs.radius(this);
+        origRootRadius = WidgetPrefs.rootRadius(this);
+        origCardH = WidgetPrefs.cardHeight(this);
+        origAccent = WidgetPrefs.accentIndex(this);
+        origRefresh = WidgetPrefs.refreshMode(this);
+        origHour24 = WidgetPrefs.hour24(this);
+        origShowKind = WidgetPrefs.showKind(this);
+        origUpcoming = WidgetPrefs.showUpcoming(this);
+        origPlace = WidgetPrefs.showPlace(this);
+        origTeacher = WidgetPrefs.showTeacher(this);
+        origClick = WidgetPrefs.clickEnabled(this);
+
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                save();
+            }
+        });
+
+        rowAlpha = new SliderRow(this, R.id.row_alpha, "背景透明度");
+        rowCardAlpha = new SliderRow(this, R.id.row_card_alpha, "卡片透明度");
+        rowRootRadius = new SliderRow(this, R.id.row_root_radius, "背景圆角");
+        rowCardRadius = new SliderRow(this, R.id.row_card_radius, "卡片圆角");
+        rowFont = new SliderRow(this, R.id.row_font, "字号");
+        rowCardHeight = new SliderRow(this, R.id.row_card_height, "卡片高度");
+
+        chkUpcoming = findViewById(R.id.chk_upcoming);
         chkPlace = findViewById(R.id.chk_place);
         chkTeacher = findViewById(R.id.chk_teacher);
-        chkUpcoming = findViewById(R.id.chk_upcoming);
+        chkKind = findViewById(R.id.chk_kind);
         chkClick = findViewById(R.id.chk_click);
 
         // 回显已保存的样式
-        seekAlpha.setProgress(WidgetPrefs.alpha(this) - MIN_ALPHA);
-        seekAlphaCard.setProgress(WidgetPrefs.cardAlpha(this));
-        seekFont.setProgress(WidgetPrefs.fontPercent(this) - MIN_FONT);
-        seekRadius.setMax(WidgetBgs.maxRadius());
-        seekRadius.setProgress(WidgetPrefs.radius(this));
-        seekRadiusRoot.setMax(WidgetBgs.maxRadius());
-        seekRadiusRoot.setProgress(WidgetPrefs.rootRadius(this));
-        seekCardH.setMax(CARD_H_MAX);
-        int ch = WidgetPrefs.cardHeight(this);
-        seekCardH.setProgress(ch <= 0 ? 0 : ch - CARD_H_BASE + 1);
-        chkPlace.setChecked(WidgetPrefs.showPlace(this));
-        chkTeacher.setChecked(WidgetPrefs.showTeacher(this));
-        chkUpcoming.setChecked(WidgetPrefs.showUpcoming(this));
-        chkClick.setChecked(WidgetPrefs.clickEnabled(this));
+        rowAlpha.bar.setMax(100);
+        rowAlpha.bar.setProgress(WidgetPrefs.alpha(this));
+        rowCardAlpha.bar.setMax(100);
+        rowCardAlpha.bar.setProgress(WidgetPrefs.cardAlpha(this));
+        rowFont.bar.setMax(80);
+        rowFont.bar.setProgress(WidgetPrefs.fontPercent(this) - MIN_FONT);
+        rowRootRadius.bar.setMax(WidgetBgs.maxRadius());
+        rowRootRadius.bar.setProgress(WidgetPrefs.rootRadius(this));
+        rowCardRadius.bar.setMax(WidgetBgs.maxRadius());
+        rowCardRadius.bar.setProgress(WidgetPrefs.radius(this));
+        rowCardHeight.bar.setMax(CARD_H_MAX);
+        int ch0 = WidgetPrefs.cardHeight(this);
+        rowCardHeight.bar.setProgress(ch0 <= 0 ? 0 : ch0 - CARD_H_BASE + 1);
 
-        SeekBar.OnSeekBarChangeListener sizeListener = new SeekBar.OnSeekBarChangeListener() {
+        bindSwitch(chkPlace, WidgetPrefs.showPlace(this));
+        bindSwitch(chkTeacher, WidgetPrefs.showTeacher(this));
+        bindSwitch(chkUpcoming, WidgetPrefs.showUpcoming(this));
+        bindSwitch(chkKind, WidgetPrefs.showKind(this));
+        bindSwitch(chkClick, WidgetPrefs.clickEnabled(this));
+
+        SeekBar.OnSeekBarChangeListener listener = new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                render();
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
-        };
-        seekW.setOnSeekBarChangeListener(sizeListener);
-        seekH.setOnSeekBarChangeListener(sizeListener);
-
-        SeekBar.OnSeekBarChangeListener styleListener = new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser && seekBar != seekW && seekBar != seekH) {
+                if (fromUser) {
                     showPresetSelection(-1);
                 }
                 saveAndRender();
@@ -137,35 +163,57 @@ public class PreviewActivity extends Activity {
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         };
-        seekAlpha.setOnSeekBarChangeListener(styleListener);
-        seekAlphaCard.setOnSeekBarChangeListener(styleListener);
-        seekCardH.setOnSeekBarChangeListener(styleListener);
-        seekFont.setOnSeekBarChangeListener(styleListener);
-        seekRadius.setOnSeekBarChangeListener(styleListener);
-        seekRadiusRoot.setOnSeekBarChangeListener(styleListener);
+        rowAlpha.bar.setOnSeekBarChangeListener(listener);
+        rowCardAlpha.bar.setOnSeekBarChangeListener(listener);
+        rowFont.bar.setOnSeekBarChangeListener(listener);
+        rowRootRadius.bar.setOnSeekBarChangeListener(listener);
+        rowCardRadius.bar.setOnSeekBarChangeListener(listener);
+        rowCardHeight.bar.setOnSeekBarChangeListener(listener);
 
-        CompoundButton.OnCheckedChangeListener checkListener = new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                saveAndRender();
-            }
-        };
-        chkPlace.setOnCheckedChangeListener(checkListener);
-        chkTeacher.setOnCheckedChangeListener(checkListener);
-        chkUpcoming.setOnCheckedChangeListener(checkListener);
-        chkClick.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                WidgetPrefs.setClickEnabled(PreviewActivity.this, isChecked);
-                ScheduleWidgetProvider.refreshAll(PreviewActivity.this);
+        // 强调色：6 个色点
+        LinearLayout accentRow = findViewById(R.id.accent_row);
+        accentRow.removeAllViews();
+        for (int i = 0; i < WidgetPrefs.ACCENTS.length; i++) {
+            final int idx = i;
+            View dot = new View(this);
+            int size = dp(34);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(size, size);
+            lp.setMarginEnd(dp(10));
+            dot.setLayoutParams(lp);
+            android.graphics.drawable.GradientDrawable ring =
+                    new android.graphics.drawable.GradientDrawable();
+            ring.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            ring.setColor(WidgetPrefs.ACCENTS[i]);
+            dot.setBackground(ring);
+            dot.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    WidgetPrefs.sp(PreviewActivity.this).edit()
+                            .putInt("accent", idx).apply();
+                    refreshChoiceStyles();
+                    markDirty();
+                    render();
+                }
+            });
+            accentRow.addView(dot);
+        }
+
+        // 时间制式
+        chip(R.id.time_24, new Runnable() {
+            public void run() {
+                putBool("hour24", true);
             }
         });
-        chkSample.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                render();
+        chip(R.id.time_12, new Runnable() {
+            public void run() {
+                putBool("hour24", false);
             }
         });
+
+        // 刷新频率
+        findViewById(R.id.refresh_smart).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_SMART));
+        findViewById(R.id.refresh_saver).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_SAVER));
+        findViewById(R.id.refresh_frequent).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_FREQUENT));
 
         presetStyle(0, 93, 90, 100, 16, 24, 0);
         presetStyle(1, 70, 75, 100, 20, 28, 0);
@@ -177,38 +225,125 @@ public class PreviewActivity extends Activity {
             public void onClick(View v) {
                 showPresetSelection(0);
                 applyStyle(93, 90, 100, 16, 24, 0);
-                Toast.makeText(PreviewActivity.this, "已恢复默认", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PreviewActivity.this, "已恢复默认，记得点保存", Toast.LENGTH_SHORT).show();
             }
         });
-
-        findViewById(R.id.btn_refresh_smart).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_SMART));
-        findViewById(R.id.btn_refresh_saver).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_SAVER));
-        findViewById(R.id.btn_refresh_frequent).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_FREQUENT));
-
-        preset(R.id.btn_2x2, 158, 158);
-        preset(R.id.btn_4x2, 340, 158);
-        preset(R.id.btn_4x4, 340, 340);
-        preset(R.id.btn_tablet, 520, 280);
 
         showPresetSelection(-1);
         showRefreshMode();
         render();
     }
 
-    private void preset(int id, final int w, final int h) {
+    /** 写一个整型样式项并立刻刷新组件 */
+    private void putInt(String key, int v) {
+        WidgetPrefs.sp(this).edit().putInt(key, v).apply();
+        refreshChoiceStyles();
+        markDirty();
+        render();
+    }
+
+    private void putBool(String key, boolean v) {
+        WidgetPrefs.sp(this).edit().putBoolean(key, v).apply();
+        refreshChoiceStyles();
+        markDirty();
+        render();
+    }
+
+    /** 开关行：用 drawableEnd 表示状态，点一下翻转 */
+    private void bindSwitch(final TextView tv, boolean on) {
+        tv.setTag(on);
+        paintSwitch(tv, on);
+        tv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean next = !(Boolean) tv.getTag();
+                tv.setTag(next);
+                paintSwitch(tv, next);
+                String key;
+                int id = tv.getId();
+                if (id == R.id.chk_place) key = "place";
+                else if (id == R.id.chk_teacher) key = "teacher";
+                else if (id == R.id.chk_upcoming) key = "upcoming";
+                else if (id == R.id.chk_kind) key = "showKind";
+                else key = "click_enabled";
+                WidgetPrefs.sp(PreviewActivity.this).edit().putBoolean(key, next).apply();
+                showPresetSelection(-1);
+                markDirty();
+                render();
+            }
+        });
+    }
+
+    private void paintSwitch(TextView tv, boolean on) {
+        tv.setCompoundDrawablesWithIntrinsicBounds(0, 0, on ? R.drawable.ic_check_on : R.drawable.ic_check_off, 0);
+        // 勾选色跟随用户选的强调色（drawable 是静态的，只能运行时 tint）
+        android.graphics.drawable.Drawable[] ds = tv.getCompoundDrawables();
+        if (ds[2] != null) {
+            ds[2].setTint(on ? WidgetPrefs.accentColor(this) : 0x66FFFFFF);
+        }
+    }
+
+    /** 胶囊选项：点击后写值并刷新选中态 */
+    private void chip(final int id, final Runnable action) {
         findViewById(id).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                seekW.setProgress(w - MIN_W);
-                seekH.setProgress(h - MIN_H);
+                action.run();
+            }
+        });
+    }
+
+    /** 把所有「选项类」控件的选中态重画一遍（预设 / 间距 / 时间制 / 刷新 / 强调色） */
+    private void refreshChoiceStyles() {
+        showPresetSelection(activePreset);
+        paintChipGroup(new int[]{R.id.time_24, R.id.time_12}, WidgetPrefs.hour24(this) ? 0 : 1);
+        paintChipGroup(new int[]{R.id.refresh_smart, R.id.refresh_saver, R.id.refresh_frequent},
+                WidgetPrefs.refreshMode(this));
+        // 强调色选中环
+        LinearLayout row = findViewById(R.id.accent_row);
+        int sel = WidgetPrefs.accentIndex(this);
+        for (int i = 0; i < row.getChildCount(); i++) {
+            View dot = row.getChildAt(i);
+            android.graphics.drawable.GradientDrawable ring =
+                    new android.graphics.drawable.GradientDrawable();
+            ring.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            ring.setColor(WidgetPrefs.ACCENTS[i]);
+            if (i == sel) {
+                ring.setStroke(dp(3), 0xFFFFFFFF);
+            }
+            dot.setBackground(ring);
+        }
+    }
+
+    private void paintChipGroup(int[] ids, int selected) {
+        for (int i = 0; i < ids.length; i++) {
+            TextView tv = findViewById(ids[i]);
+            if (tv == null) {
+                continue;
+            }
+            boolean on = (i == selected);
+            tv.setBackgroundResource(on ? R.drawable.bg_chip_on : R.drawable.bg_chip);
+            tv.setTextColor(on ? WidgetPrefs.accentColor(this) : 0xFFB8BFCB);
+        }
+    }
+
+    /** 尺寸档位（新布局里尺寸靠滑杆调，这里只留程序化入口） */
+    private void preset(int id, final int w, final int h) {
+        View v = findViewById(id);
+        if (v == null) {
+            return;
+        }
+        v.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 render();
             }
         });
     }
 
     private static final int[] PRESET_IDS = {
-            R.id.btn_preset_default, R.id.btn_preset_glass,
-            R.id.btn_preset_min, R.id.btn_preset_contrast
+            R.id.preset_default, R.id.preset_glass,
+            R.id.preset_min, R.id.preset_high
     };
 
     /** 当前选中的预设（-1 = 自定义） */
@@ -232,20 +367,14 @@ public class PreviewActivity extends Activity {
             public void onClick(View v) {
                 WidgetPrefs.setRefreshMode(PreviewActivity.this, mode);
                 showRefreshMode();
-                ScheduleWidgetProvider.refreshAll(PreviewActivity.this);
+                markDirty();
             }
         };
     }
 
     private void showRefreshMode() {
         int mode = WidgetPrefs.refreshMode(this);
-        int[] ids = {R.id.btn_refresh_smart, R.id.btn_refresh_saver, R.id.btn_refresh_frequent};
-        for (int i = 0; i < ids.length; i++) {
-            TextView tv = findViewById(ids[i]);
-            boolean on = (i == mode);
-            tv.setBackgroundResource(on ? R.drawable.bg_chip_on : R.drawable.bg_chip);
-            tv.setTextColor(on ? 0xFF3FD3AC : 0xFFB8BFCB);
-        }
+        paintChipGroup(new int[]{R.id.refresh_smart, R.id.refresh_saver, R.id.refresh_frequent}, mode);
         TextView hint = findViewById(R.id.txt_refresh_hint);
         String text;
         if (mode == WidgetPrefs.REFRESH_SMART) {
@@ -263,51 +392,117 @@ public class PreviewActivity extends Activity {
         for (int i = 0; i < PRESET_IDS.length; i++) {
             TextView tv = findViewById(PRESET_IDS[i]);
             boolean on = (i == index);
-            tv.setBackgroundResource(on ? R.drawable.bg_chip_on : R.drawable.bg_chip);
-            tv.setTextColor(on ? 0xFF3FD3AC : 0xFFB8BFCB);
+            tv.setBackgroundResource(on ? R.drawable.bg_preset_on : R.drawable.bg_preset);
+            tv.setTextColor(on ? WidgetPrefs.accentColor(this) : 0xFFB8BFCB);
         }
     }
 
     private void applyStyle(int alpha, int cardAlpha, int font, int radius, int rootRadius, int cardH) {
-        seekAlpha.setProgress(alpha);
-        seekAlphaCard.setProgress(cardAlpha);
-        seekFont.setProgress(font - MIN_FONT);
-        seekRadius.setProgress(radius);
-        seekRadiusRoot.setProgress(rootRadius);
-        seekCardH.setProgress(cardH <= 0 ? 0 : cardH - 40 + 1);
+        rowAlpha.bar.setProgress(alpha);
+        rowCardAlpha.bar.setProgress(cardAlpha);
+        rowFont.bar.setProgress(font - MIN_FONT);
+        rowCardRadius.bar.setProgress(radius);
+        rowRootRadius.bar.setProgress(rootRadius);
+        rowCardHeight.bar.setProgress(cardH <= 0 ? 0 : cardH - 40 + 1);
         showPresetSelection(activePreset);
         saveAndRender();
     }
 
+    /**
+     * 拖滑杆时的即时反馈：把值写进 prefs（预览要通过它渲染），但**不刷新桌面组件** ——
+     * 桌面只在点「保存」时更新，这就是「改完要保存才生效」的实现方式。
+     */
     private void saveAndRender() {
         WidgetPrefs.save(this,
-                MIN_ALPHA + seekAlpha.getProgress(),
-                seekAlphaCard.getProgress(),
-                MIN_FONT + seekFont.getProgress(),
-                seekRadius.getProgress(),
-                seekRadiusRoot.getProgress(),
-                cardHeightOf(seekCardH.getProgress()),
-                chkUpcoming.isChecked(),
-                chkPlace.isChecked(),
-                chkTeacher.isChecked());
-        ScheduleWidgetProvider.refreshAll(this);
+                MIN_ALPHA + rowAlpha.bar.getProgress(),
+                rowCardAlpha.bar.getProgress(),
+                MIN_FONT + rowFont.bar.getProgress(),
+                rowCardRadius.bar.getProgress(),
+                rowRootRadius.bar.getProgress(),
+                cardHeightOf(rowCardHeight.bar.getProgress()),
+                WidgetPrefs.showUpcoming(this),
+                WidgetPrefs.showPlace(this),
+                WidgetPrefs.showTeacher(this));
+        markDirty();
         render();
     }
 
-    private void render() {
-        int wDp = seekW.getProgress() + MIN_W;
-        int hDp = seekH.getProgress() + MIN_H;
-        txtW.setText(wDp + " dp");
-        txtH.setText(hDp + " dp");
-        txtAlpha.setText((MIN_ALPHA + seekAlpha.getProgress()) + "%");
-        txtAlphaCard.setText(seekAlphaCard.getProgress() + "%");
-        int cardH = cardHeightOf(seekCardH.getProgress());
-        txtCardH.setText(cardH == 0 ? "自动" : cardH + " dp");
-        txtFont.setText((MIN_FONT + seekFont.getProgress()) + "%");
-        txtRadius.setText(seekRadius.getProgress() + " dp");
-        txtRadiusRoot.setText(seekRadiusRoot.getProgress() + " dp");
+    private void markDirty() {
+        dirty = true;
+        txtDirty.setVisibility(View.VISIBLE);
+    }
 
-        List<Event> events = chkSample.isChecked() ? sampleEvents() : EventStore.load(this);
+    private void markClean() {
+        dirty = false;
+        txtDirty.setVisibility(View.GONE);
+    }
+
+    /**
+     * 保存：刷桌面组件 + 提示哪些改动需要重新放置组件。
+     *
+     * 为什么要这个提示：RemoteViews 的行高、圆角裁剪这些，桌面已在用的组件
+     * 不会重新走一遍 onUpdate，必须把组件拖掉再重新添加才吃到新值。
+     */
+    private void save() {
+        ScheduleWidgetProvider.refreshAll(this);
+        markClean();
+        AppDialog.show(this, "已保存",
+                "桌面组件已刷新。\n\n卡片高度、圆角这类属性需要重新添加组件才完全生效 —— "
+                        + "长按桌面上的课表组件删掉，再重新拖一个出来即可。",
+                "知道了", null, null, null);
+    }
+
+    /**
+     * 离开页面：有未保存的改动就回滚到进入时的值。
+     * 否则用户会以为「我刚才调了半天怎么没生效」。
+     */
+    @Override
+    public void onBackPressed() {
+        if (dirty) {
+            AppDialog.show(this, "放弃未保存的修改？", "改动还没保存，返回会还原成进入时的样式。",
+                    "放弃", new AppDialog.Action() {
+                        @Override
+                        public void run() {
+                            rollback();
+                            finish();
+                        }
+                    },
+                    "继续编辑", null);
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    /** 回滚到进入页面时的样式 */
+    private void rollback() {
+        WidgetPrefs.save(this, origAlpha, origCardAlpha, origFont,
+                origRadius, origRootRadius, origCardH,
+                origUpcoming, origPlace, origTeacher);
+        WidgetPrefs.sp(this).edit()
+                .putInt("accent", origAccent)
+                .putInt("refresh_mode", origRefresh)
+                .putBoolean("hour24", origHour24)
+                .putBoolean("showKind", origShowKind)
+                .putBoolean("click_enabled", origClick)
+                .apply();
+        ScheduleWidgetProvider.refreshAll(this);
+    }
+
+    private void render() {
+        rowAlpha.value.setText((MIN_ALPHA + rowAlpha.bar.getProgress()) + "%");
+        rowCardAlpha.value.setText(rowCardAlpha.bar.getProgress() + "%");
+        int cardH = cardHeightOf(rowCardHeight.bar.getProgress());
+        rowCardHeight.value.setText(cardH == 0 ? "自动" : cardH + " dp");
+        rowFont.value.setText((MIN_FONT + rowFont.bar.getProgress()) + "%");
+        rowCardRadius.value.setText(rowCardRadius.bar.getProgress() + " dp");
+        rowRootRadius.value.setText(rowRootRadius.bar.getProgress() + " dp");
+
+        List<Event> events = EventStore.load(this);
+        if (events.isEmpty()) {
+            events = sampleEvents();
+        }
+        int wDp = PREVIEW_W_DP;
+        int hDp = PREVIEW_H_DP;
         float scale = ScheduleWidgetProvider.scaleFor(hDp) * (WidgetPrefs.fontPercent(this) / 100f);
         int rows = ScheduleWidgetProvider.rowsFor(hDp);
         String measured = WidgetPrefs.lastSize(this);

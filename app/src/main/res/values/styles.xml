@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 配对码数字格：等宽、居中、圆角 -->
+    <!-- 配对码数字格 -->
     <style name="PairCell">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">54dp</item>
@@ -15,17 +15,52 @@
         <item name="android:includeFontPadding">false</item>
     </style>
 
-    <!-- 配对码键盘键：三列均分 -->
-    <style name="PairKey">
+    <!-- 分组标题：小字 + 字距，和内容拉开层次 -->
+    <style name="EditorSection">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">10dp</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">@color/text_tertiary</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 预设卡：两列，各自独立留白 -->
+    <style name="EditorPreset">
         <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">50dp</item>
+        <item name="android:layout_height">46dp</item>
         <item name="android:layout_weight">1</item>
-        <item name="android:layout_margin">3dp</item>
-        <item name="android:background">@drawable/pair_key</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:background">@drawable/bg_preset</item>
         <item name="android:gravity">center</item>
-        <item name="android:textColor">#FFF2F5F8</item>
-        <item name="android:textSize">19sp</item>
-        <item name="android:clickable">true</item>
-        <item name="android:focusable">true</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <!-- 胶囊选项：等分一行 -->
+    <style name="EditorChip">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">34dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <!-- 开关行：左边文字、右边假开关 -->
+    <style name="EditorSwitch">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:drawableEnd">@drawable/ic_check_off</item>
+        <item name="android:drawablePadding">12dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">14sp</item>
     </style>
 </resources>

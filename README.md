@@ -96,6 +96,7 @@ versionCode = YYMMDD × 100 + 当天序号
 - 圆角 + 透明度的实现方式：外层 `FrameLayout` 用 `clipToOutline` 裁剪，内层容器
   `setBackgroundColor` 带 alpha —— 因为 `RemoteViews` 不能在运行时改形状 drawable 的圆角和透明度
 - 组件刷新用 `AlarmManager` 精确定时：上下课、零点各一次；「智能」模式下有课进行中时每分钟刷一次
+- 事件类型来自 ics 的 `CATEGORIES` 字段（课程 / 考试 / 日程），没有该字段的老文件一律按「课程」显示
 - 课程颜色由课名哈希决定（和小程序同一套算法），同一门课在两个端颜色一致
 - ICS 解析自己写的：处理折行展开、`TZID` / `Z` 时间、`RRULE WEEKLY` 重复、`EXDATE` 排除，
   并跳过 `VALARM` 等嵌套子块（这是个容易踩的坑：嵌套块里的 `DESCRIPTION` 会盖掉正文）

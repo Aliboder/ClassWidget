@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 间距刻度（4 的倍数，页面里只用这些） -->
+    <dimen name="sp_1">4dp</dimen>
+    <dimen name="sp_2">8dp</dimen>
+    <dimen name="sp_3">12dp</dimen>
+    <dimen name="sp_4">16dp</dimen>
+    <dimen name="sp_5">20dp</dimen>
+    <dimen name="sp_6">24dp</dimen>
+    <dimen name="sp_8">32dp</dimen>
+
+    <!-- 圆角 -->
+    <dimen name="r_sm">10dp</dimen>
+    <dimen name="r_md">14dp</dimen>
+    <dimen name="r_lg">20dp</dimen>
+
+    <!-- 页面左右留白 -->
+    <dimen name="gutter">20dp</dimen>
+</resources>

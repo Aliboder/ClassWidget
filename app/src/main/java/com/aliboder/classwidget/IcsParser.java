@@ -160,6 +160,7 @@ public final class IcsParser {
         String place = "";
         String teacher = "";
         String desc = "";
+        String kind = "";
         String startRaw = null;
         String startLine = null;
         String endRaw = null;
@@ -215,6 +216,13 @@ public final class IcsParser {
                 hasOverride = true;
             } else if ("STATUS".equals(name)) {
                 status = valueOf(line).trim();
+            } else if ("CATEGORIES".equals(name)) {
+                // 2026-11-10：导出方写「课程 / 考试 / 日程」，导入后按类型显示标签。
+                // 老文件没有这行 → 保持默认「课程」（和以前表现一致）。
+                String v = unescape(valueOf(line)).trim();
+                if (!v.isEmpty()) {
+                    kind = v;
+                }
             }
         }
 
@@ -254,7 +262,7 @@ public final class IcsParser {
         teacher = extractTeacher(desc, organizer, attendee);
 
         if (rrule == null || rrule.isEmpty()) {
-            out.add(make(title, place, teacher, rawDesc, start, end, allDay));
+            out.add(make(title, place, teacher, rawDesc, start, end, allDay, kind));
             return;
         }
 
@@ -272,13 +280,16 @@ public final class IcsParser {
             if (skip.contains(t)) {
                 continue;
             }
-            out.add(make(title, place, teacher, rawDesc, t, t + duration, allDay));
+            out.add(make(title, place, teacher, rawDesc, t, t + duration, allDay, kind));
         }
     }
 
     private static Event make(String title, String place, String teacher, String rawDesc,
-                              long start, long end, boolean allDay) {
+                              long start, long end, boolean allDay, String kind) {
         Event e = new Event();
+        if (!kind.isEmpty()) {
+            e.kind = normalizeKind(kind);
+        }
         e.title = title;
         e.place = place == null ? "" : place.trim();
         e.teacher = teacher == null ? "" : teacher.trim();
@@ -314,6 +325,18 @@ public final class IcsParser {
     private static final String[] TEACHER_LABELS = {
             "任课教师", "授课教师", "主讲教师", "上课教师", "教师", "老师", "主讲"
     };
+
+    /** CATEGORIES 归一化成三种标签（导出方偶尔会带逗号分隔的多个分类，取第一个认识的） */
+    private static String normalizeKind(String raw) {
+        String v = raw.toUpperCase(Locale.US);
+        if (v.contains("考试") || v.contains("EXAM")) {
+            return "考试";
+        }
+        if (v.contains("日程") || v.contains("SCHEDULE") || v.contains("MEETING")) {
+            return "日程";
+        }
+        return "课程";
+    }
 
     /**
      * 从 DESCRIPTION 里找教师。各校各 App 导出的 ics 前缀五花八门
