@@ -36,14 +36,14 @@ public final class AppDialog {
         final Dialog d = new Dialog(a, R.style.Theme_PairCodeDialog);
         LinearLayout box = new LinearLayout(a);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setBackgroundResource(R.drawable.pair_sheet);
+        box.setBackgroundResource(Theme.isDark(a) ? R.drawable.pair_sheet : R.drawable.pair_sheet_light);
         int p = dp(a, 22);
         box.setPadding(p, p, p, dp(a, 16));
 
         TextView t = new TextView(a);
         t.setText(title);
         t.setTextSize(18);
-        t.setTextColor(0xFFF2F5F8);
+        t.setTextColor(Theme.textPrimary(a));
         t.setTypeface(t.getTypeface(), android.graphics.Typeface.BOLD);
         box.addView(t);
 
@@ -51,7 +51,7 @@ public final class AppDialog {
             TextView m = new TextView(a);
             m.setText(message);
             m.setTextSize(13.5f);
-            m.setTextColor(0xFFA8B0BC);
+            m.setTextColor(Theme.textSecondary(a));
             m.setLineSpacing(dp(a, 4), 1f);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -71,7 +71,7 @@ public final class AppDialog {
             TextView cancel = new TextView(a);
             cancel.setText(cancelText);
             cancel.setTextSize(14.5f);
-            cancel.setTextColor(0xFFA8B0BC);
+            cancel.setTextColor(Theme.textSecondary(a));
             cancel.setGravity(Gravity.CENTER);
             cancel.setBackgroundResource(R.drawable.bg_btn_ghost);
             LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, dp(a, 46), 1f);

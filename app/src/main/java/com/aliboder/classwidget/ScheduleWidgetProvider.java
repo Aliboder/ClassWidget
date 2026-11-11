@@ -195,7 +195,10 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
                 return Long.compare(a.start, b.start);
             }
         });
-        RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_schedule);
+        // 按主题选布局：浅色版自带一套配色，比运行时逐个 setTextColor 彻底
+        boolean dark = Theme.isDark(context);
+        RemoteViews rv = new RemoteViews(context.getPackageName(),
+                dark ? R.layout.widget_schedule : R.layout.widget_schedule_light);
 
         int fixedCardH = WidgetPrefs.cardHeight(context);
         int rows = fixedCardH > 0
@@ -217,23 +220,10 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
 
         rv.setInt(R.id.w_frame, "setBackgroundResource",
                 alpha <= 0 ? R.drawable.round_blank : WidgetBgs.round(rootRadius));
-        // 浅色：根背景用白，深色：沿用原来的深灰
-        boolean dark = Theme.isDark(context);
+        // 背景色按透明度实时算：浅色用白，深色沿用原来的深灰
         rv.setInt(R.id.w_root, "setBackgroundColor", dark
                 ? argb(alpha, 0x15, 0x15, 0x1A)
                 : argb(alpha, 0xFF, 0xFF, 0xFF));
-        // 浅色模式下把文字染深（RemoteViews 拿不到 ?attr，只能逐个覆盖）
-        if (!dark) {
-            rv.setTextColor(R.id.w_date, 0xFF14171B);
-            rv.setTextColor(R.id.w_weekday, 0xFF4A525C);
-            for (int i = 0; i < MAX_CARDS; i++) {
-                rv.setTextColor(TITLES[i], 0xFF14171B);
-                rv.setTextColor(METAS[i], 0xFF4A525C);
-                rv.setTextColor(TEACHERS[i], 0xFF4A525C);
-                rv.setTextColor(TAGS[i], 0xFF5A636D);
-            }
-        }
-
         float titleSp = 14.5f * scale;
         float pillSp = 9.5f * scale;
         float metaSp = 10.5f * scale;
