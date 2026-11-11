@@ -84,6 +84,7 @@ public class PreviewActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         Theme.apply(this);
         super.onCreate(savedInstanceState);
+        ThemeSwitch.play(this);
         setContentView(R.layout.activity_preview);
 
         findViewById(R.id.preview_stage).setBackgroundResource(
@@ -223,8 +224,11 @@ public class PreviewActivity extends Activity {
                     if (Theme.mode(PreviewActivity.this) == mode) {
                         return;
                     }
+                    ThemeSwitch.mark();
                     Theme.setMode(PreviewActivity.this, mode);
                     ScheduleWidgetProvider.refreshAll(PreviewActivity.this);
+                    // 关掉系统默认的窗口过渡，只留圆形展开
+                    getWindow().setWindowAnimations(0);
                     recreate();
                 }
             });
@@ -249,7 +253,6 @@ public class PreviewActivity extends Activity {
             }
         });
 
-        showPresetSelection(-1);
         refreshChoiceStyles();
         showRefreshMode();
         render();
@@ -391,12 +394,8 @@ public class PreviewActivity extends Activity {
             R.id.preset_min, R.id.preset_high
     };
 
-    /**
-     * 当前选中的预设；-1 = 自定义（用户自己调过，或刚从已保存的配置进来）。
-     * ⛔ 初值必须是 -1：以前是 0，导致每次进页面都把「默认」高亮，
-     *    用户以为当前就是默认样式，点一下或直接保存就把自己的配置冲掉了。
-     */
-    private int activePreset = -1;
+    /** 当前选中的预设（-1 = 自定义） */
+    private int activePreset = 0;
 
     private void presetStyle(final int index, int alpha, final int cardAlpha, final int font,
                              final int radius, final int rootRadius, final int cardH) {

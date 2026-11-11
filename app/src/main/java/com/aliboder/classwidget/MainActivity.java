@@ -60,6 +60,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         Theme.apply(this);
         super.onCreate(savedInstanceState);
+        ThemeSwitch.play(this);
         setContentView(R.layout.activity_main);
 
         heroDate = findViewById(R.id.hero_date);
@@ -155,7 +156,7 @@ public class MainActivity extends Activity {
             final int which = i;
             if (i > 0) {
                 View div = new View(this);
-                div.setBackgroundColor(Theme.stroke(this));
+                div.setBackgroundColor(0x14FFFFFF);
                 LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, 1);
                 div.setLayoutParams(dlp);
@@ -620,12 +621,6 @@ public class MainActivity extends Activity {
     private int cTextSecondary() { return Theme.textSecondary(this); }
     private int cTextTertiary() { return Theme.textTertiary(this); }
     private int cAccent() { return WidgetPrefs.accentColor(this); }
-
-    /** 强调色 + 指定不透明度（0-255） */
-    private int accent(int a) {
-        int c = WidgetPrefs.accentColor(this);
-        return (a << 24) | (c & 0x00FFFFFF);
-    }
     private int cTagCourse() { return Theme.isDark(this) ? 0xFF9FE8D1 : 0xFF0E8C6D; }
     private int cTagExam() { return Theme.isDark(this) ? 0xFFFFB4AB : 0xFFC62828; }
     private int cTagSchedule() { return Theme.isDark(this) ? 0xFFB8BFCB : 0xFF5A636D; }
@@ -647,7 +642,7 @@ public class MainActivity extends Activity {
         TextView sep = new TextView(this);
         sep.setText("|");
         sep.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(22));
-        sep.setTextColor(today ? accent(0x88) : cTextTertiary());
+        sep.setTextColor(today ? 0x883FD3AC : cTextTertiary());
         sep.setIncludeFontPadding(false);
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -659,7 +654,7 @@ public class MainActivity extends Activity {
         TextView weekday = new TextView(this);
         weekday.setText(weekFmt.format(new Date(millis)));
         weekday.setTextSize(TypedValue.COMPLEX_UNIT_PX, rpx(30));
-        weekday.setTextColor(today ? accent(0xCC) : cTextSecondary());
+        weekday.setTextColor(today ? 0xCC3FD3AC : cTextSecondary());
         weekday.setIncludeFontPadding(false);
         row.addView(weekday);
 
@@ -704,7 +699,7 @@ public class MainActivity extends Activity {
         row.addView(dot);
 
         View line = new View(this);
-        line.setBackgroundColor(accent(0x59));
+        line.setBackgroundColor(0x593FD3AC);
         line.setLayoutParams(new LinearLayout.LayoutParams(0, rpx(2), 1f));
         row.addView(line);
 
@@ -817,7 +812,7 @@ public class MainActivity extends Activity {
         View strip = new View(this);
         GradientDrawable stripBg = new GradientDrawable();
         stripBg.setCornerRadius(rpx(6));
-        stripBg.setColor(past ? cTextTertiary() : CourseColors.color(e.title));
+        stripBg.setColor(past ? 0x668A929C : CourseColors.color(e.title));
         strip.setBackground(stripBg);
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(rpx(12), LinearLayout.LayoutParams.MATCH_PARENT);
         slp.topMargin = rpx(2);
