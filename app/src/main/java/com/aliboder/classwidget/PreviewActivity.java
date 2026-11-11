@@ -1,5 +1,7 @@
 package com.aliboder.classwidget;
 
+import android.content.Context;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.TypedValue;
@@ -90,14 +92,18 @@ public class PreviewActivity extends Activity {
     private TextView chkClick;
 
     @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(Theme.wrap(base));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Theme.apply(this);
         super.onCreate(savedInstanceState);
         ThemeSwitch.play(this);
         setContentView(R.layout.activity_preview);
 
         findViewById(R.id.preview_stage).setBackgroundResource(
-                Theme.isDark(this) ? R.drawable.preview_stage : R.drawable.preview_stage_light);
+                R.drawable.preview_stage);
         host = findViewById(R.id.preview_host);
         info = findViewById(R.id.preview_info);
         txtDirty = findViewById(R.id.txt_dirty);
@@ -323,7 +329,7 @@ public class PreviewActivity extends Activity {
 
     private int chipBg(boolean on) {
         if (on) return R.drawable.bg_chip_on;
-        return Theme.isDark(this) ? R.drawable.bg_chip : R.drawable.bg_chip_light;
+        return R.drawable.bg_chip;
     }
 
     /** 强调色在浅底上偏淡，压深一档再当文字色用 */
@@ -346,7 +352,7 @@ public class PreviewActivity extends Activity {
             }
             boolean on = (i == selected);
             tv.setBackgroundResource(chipBg(on));
-            tv.setTextColor(on ? onAccentText() : Theme.textSecondary(this));
+            tv.setTextColor(on ? onAccentText() : getColor(R.color.text_secondary));
         }
     }
 

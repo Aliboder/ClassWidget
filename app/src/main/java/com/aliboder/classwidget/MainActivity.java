@@ -1,5 +1,7 @@
 package com.aliboder.classwidget;
 
+import android.content.Context;
+
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -57,8 +59,12 @@ public class MainActivity extends Activity {
     private boolean showPast = false;
 
     @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(Theme.wrap(base));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Theme.apply(this);
         super.onCreate(savedInstanceState);
         ThemeSwitch.play(this);
         setContentView(R.layout.activity_main);
@@ -110,7 +116,7 @@ public class MainActivity extends Activity {
             }
         });
         // 顶栏三个图标按主题染色（矢量图里写死的是深色模式的浅灰）
-        int iconTint = Theme.textSecondary(this);
+        int iconTint = getColor(R.color.text_secondary);
         int[] iconIds = {R.id.btn_refresh, R.id.btn_style, R.id.btn_more};
         for (int id : iconIds) {
             android.widget.ImageView iv = findViewById(id);
@@ -148,7 +154,7 @@ public class MainActivity extends Activity {
         final android.app.Dialog d = new android.app.Dialog(this, R.style.Theme_PairCodeDialog);
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setBackgroundResource(R.drawable.pair_sheet);
+        box.setBackgroundResource(R.drawable.sheet_bg);
         int pad = dp(8);
         box.setPadding(pad, pad, pad, pad);
 
@@ -156,7 +162,7 @@ public class MainActivity extends Activity {
             final int which = i;
             if (i > 0) {
                 View div = new View(this);
-                div.setBackgroundColor(Theme.stroke(this));
+                div.setBackgroundColor(getColor(R.color.stroke));
                 LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, 1);
                 div.setLayoutParams(dlp);
@@ -617,18 +623,18 @@ public class MainActivity extends Activity {
 
     /** 段头：11月8日 | 周日 [今天] ………… 2 节 */
     /* ---- 时间线配色：浅色/深色各一套（代码画的 View 不能靠 ?attr） ---- */
-    private int cTextPrimary() { return Theme.textPrimary(this); }
-    private int cTextSecondary() { return Theme.textSecondary(this); }
-    private int cTextTertiary() { return Theme.textTertiary(this); }
+    private int cTextPrimary() { return getColor(R.color.text_primary); }
+    private int cTextSecondary() { return getColor(R.color.text_secondary); }
+    private int cTextTertiary() { return getColor(R.color.text_tertiary); }
     private int cAccent() { return WidgetPrefs.accentColor(this); }
 
     /** 强调色 + 指定不透明度（0-255），用于「现在」标线这类半透明装饰 */
     private int accent(int a) {
         return (a << 24) | (WidgetPrefs.accentColor(this) & 0x00FFFFFF);
     }
-    private int cTagCourse() { return Theme.isDark(this) ? 0xFF9FE8D1 : 0xFF0E8C6D; }
-    private int cTagExam() { return Theme.isDark(this) ? 0xFFFFB4AB : 0xFFC62828; }
-    private int cTagSchedule() { return Theme.isDark(this) ? 0xFFB8BFCB : 0xFF5A636D; }
+    private int cTagCourse() { return getColor(R.color.tag_course); }
+    private int cTagExam() { return getColor(R.color.tag_exam); }
+    private int cTagSchedule() { return getColor(R.color.tag_schedule); }
 
     private View dayHeader(long millis, boolean today, int count) {
         LinearLayout row = new LinearLayout(this);
@@ -734,7 +740,7 @@ public class MainActivity extends Activity {
         boolean past = now >= e.end;
 
         FrameLayout wrap = new FrameLayout(this);
-        wrap.setBackgroundResource(Theme.isDark(this) ? R.drawable.card_tl : R.drawable.card_tl_light);
+        wrap.setBackgroundResource(R.drawable.card_tl);
         LinearLayout.LayoutParams wlp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         wlp.leftMargin = rpx(32);
@@ -947,7 +953,7 @@ public class MainActivity extends Activity {
     private View diagnosticCard(List<Event> events) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setBackgroundResource(Theme.isDark(this) ? R.drawable.card_tl : R.drawable.card_diag_light);
+        box.setBackgroundResource(R.drawable.card_diag);
         box.setPadding(rpx(24), rpx(20), rpx(24), rpx(20));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
