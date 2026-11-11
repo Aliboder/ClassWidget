@@ -50,8 +50,9 @@ public final class WidgetPrefs {
     public static final int REFRESH_SAVER = 1;
     public static final int REFRESH_FREQUENT = 2;
 
+    /** 固定「频繁」（2026-11-11 用户：不再让用户选，统一每分钟刷新） */
     public static int refreshMode(Context c) {
-        return sp(c).getInt("refresh_mode", REFRESH_SMART);
+        return REFRESH_FREQUENT;
     }
 
     public static void setRefreshMode(Context c, int mode) {
@@ -96,9 +97,9 @@ public final class WidgetPrefs {
         return ACCENTS[accentIndex(c)];
     }
 
-    /** true = 24 小时制（14:40），false = 12 小时制（下午 2:40） */
+    /** 固定 24 小时制（2026-11-11 用户：去掉切换，默认 24h） */
     public static boolean hour24(Context c) {
-        return sp(c).getBoolean("hour24", true);
+        return true;
     }
 
     /** 是否在卡片右上角显示「课程 / 考试 / 日程」标签 */

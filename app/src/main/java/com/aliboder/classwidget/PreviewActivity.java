@@ -57,12 +57,21 @@ public class PreviewActivity extends Activity {
         }
     }
 
+    /** 分段档位的实际取值（与界面上的四个格子一一对应） */
+    private static final int[] ROOT_RADII = {0, 12, 20, 28};
+    private static final int[] CARD_RADII = {0, 8, 14, 20};
+    private static final int[] CARD_HEIGHTS = {0, 42, 48, 54};   // 0 = 自动
+
+    private int chosenRootRadius = 20;
+    private int chosenCardRadius = 14;
+    private int chosenCardHeight = 0;
+
     private SliderRow rowAlpha;
     private SliderRow rowCardAlpha;
-    private SliderRow rowRootRadius;
-    private SliderRow rowCardRadius;
     private SliderRow rowFont;
-    private SliderRow rowCardHeight;
+
+    /** 切主题会 recreate，滚动位置靠这个带过去（否则每次都跳回顶部） */
+    private static int pendingScrollY = -1;
 
     /** 有未保存的改动 */
     private boolean dirty = false;
@@ -118,10 +127,11 @@ public class PreviewActivity extends Activity {
 
         rowAlpha = new SliderRow(this, R.id.row_alpha, "背景透明度");
         rowCardAlpha = new SliderRow(this, R.id.row_card_alpha, "卡片透明度");
-        rowRootRadius = new SliderRow(this, R.id.row_root_radius, "背景圆角");
-        rowCardRadius = new SliderRow(this, R.id.row_card_radius, "卡片圆角");
         rowFont = new SliderRow(this, R.id.row_font, "字号");
-        rowCardHeight = new SliderRow(this, R.id.row_card_height, "卡片高度");
+
+        chosenRootRadius = nearestIndex(ROOT_RADII, WidgetPrefs.rootRadius(this));
+        chosenCardRadius = nearestIndex(CARD_RADII, WidgetPrefs.radius(this));
+        chosenCardHeight = nearestIndex(CARD_HEIGHTS, WidgetPrefs.cardHeight(this));
 
         chkUpcoming = findViewById(R.id.chk_upcoming);
         chkPlace = findViewById(R.id.chk_place);
@@ -136,13 +146,6 @@ public class PreviewActivity extends Activity {
         rowCardAlpha.bar.setProgress(WidgetPrefs.cardAlpha(this));
         rowFont.bar.setMax(80);
         rowFont.bar.setProgress(WidgetPrefs.fontPercent(this) - MIN_FONT);
-        rowRootRadius.bar.setMax(WidgetBgs.maxRadius());
-        rowRootRadius.bar.setProgress(WidgetPrefs.rootRadius(this));
-        rowCardRadius.bar.setMax(WidgetBgs.maxRadius());
-        rowCardRadius.bar.setProgress(WidgetPrefs.radius(this));
-        rowCardHeight.bar.setMax(CARD_H_MAX);
-        int ch0 = WidgetPrefs.cardHeight(this);
-        rowCardHeight.bar.setProgress(ch0 <= 0 ? 0 : ch0 - CARD_H_BASE + 1);
 
         bindSwitch(chkPlace, WidgetPrefs.showPlace(this));
         bindSwitch(chkTeacher, WidgetPrefs.showTeacher(this));
@@ -153,9 +156,7 @@ public class PreviewActivity extends Activity {
         SeekBar.OnSeekBarChangeListener listener = new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    showPresetSelection(-1);
-                }
+
                 saveAndRender();
             }
 
@@ -170,9 +171,19 @@ public class PreviewActivity extends Activity {
         rowAlpha.bar.setOnSeekBarChangeListener(listener);
         rowCardAlpha.bar.setOnSeekBarChangeListener(listener);
         rowFont.bar.setOnSeekBarChangeListener(listener);
-        rowRootRadius.bar.setOnSeekBarChangeListener(listener);
-        rowCardRadius.bar.setOnSeekBarChangeListener(listener);
-        rowCardHeight.bar.setOnSeekBarChangeListener(listener);
+
+        bindSegments(new int[]{R.id.r_root_0, R.id.r_root_1, R.id.r_root_2, R.id.r_root_3}, ROOT_RADII,
+                new Setter() {
+                    public void set(int i, int v) { chosenRootRadius = i; }
+                });
+        bindSegments(new int[]{R.id.r_card_0, R.id.r_card_1, R.id.r_card_2, R.id.r_card_3}, CARD_RADII,
+                new Setter() {
+                    public void set(int i, int v) { chosenCardRadius = i; }
+                });
+        bindSegments(new int[]{R.id.h_auto, R.id.h_min, R.id.h_mid, R.id.h_max}, CARD_HEIGHTS,
+                new Setter() {
+                    public void set(int i, int v) { chosenCardHeight = i; }
+                });
 
         // 强调色：6 个色点
         LinearLayout accentRow = findViewById(R.id.accent_row);
@@ -202,18 +213,6 @@ public class PreviewActivity extends Activity {
             accentRow.addView(dot);
         }
 
-        // 时间制式
-        chip(R.id.time_24, new Runnable() {
-            public void run() {
-                putBool("hour24", true);
-            }
-        });
-        chip(R.id.time_12, new Runnable() {
-            public void run() {
-                putBool("hour24", false);
-            }
-        });
-
         // 主题：跟随系统 / 浅色 / 深色（切完要 recreate 才能换掉当前界面的主题）
         int[] themeIds = {R.id.theme_auto, R.id.theme_light, R.id.theme_dark};
         for (int i = 0; i < themeIds.length; i++) {
@@ -227,34 +226,20 @@ public class PreviewActivity extends Activity {
                     ThemeSwitch.mark();
                     Theme.setMode(PreviewActivity.this, mode);
                     ScheduleWidgetProvider.refreshAll(PreviewActivity.this);
-                    // 关掉系统默认的窗口过渡，只留圆形展开
-                    getWindow().setWindowAnimations(0);
                     recreate();
                 }
             });
         }
 
-        // 刷新频率
-        findViewById(R.id.refresh_smart).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_SMART));
-        findViewById(R.id.refresh_saver).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_SAVER));
-        findViewById(R.id.refresh_frequent).setOnClickListener(refreshModeListener(WidgetPrefs.REFRESH_FREQUENT));
-
-        presetStyle(0, 93, 90, 100, 16, 24, 0);
-        presetStyle(1, 70, 75, 100, 20, 28, 0);
-        presetStyle(2, 0, 100, 100, 8, 16, 0);
-        presetStyle(3, 100, 100, 110, 12, 20, 0);
-
         findViewById(R.id.btn_reset).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showPresetSelection(0);
                 applyStyle(93, 90, 100, 16, 24, 0);
                 Toast.makeText(PreviewActivity.this, "已恢复默认，记得点保存", Toast.LENGTH_SHORT).show();
             }
         });
 
         refreshChoiceStyles();
-        showRefreshMode();
         render();
     }
 
@@ -291,7 +276,6 @@ public class PreviewActivity extends Activity {
                 else if (id == R.id.chk_kind) key = "showKind";
                 else key = "click_enabled";
                 WidgetPrefs.sp(PreviewActivity.this).edit().putBoolean(key, next).apply();
-                showPresetSelection(-1);
                 markDirty();
                 render();
             }
@@ -319,11 +303,8 @@ public class PreviewActivity extends Activity {
 
     /** 把所有「选项类」控件的选中态重画一遍（预设 / 间距 / 时间制 / 刷新 / 强调色） */
     private void refreshChoiceStyles() {
-        showPresetSelection(activePreset);
-        paintChipGroup(new int[]{R.id.time_24, R.id.time_12}, WidgetPrefs.hour24(this) ? 0 : 1);
-        paintChipGroup(new int[]{R.id.refresh_smart, R.id.refresh_saver, R.id.refresh_frequent},
-                WidgetPrefs.refreshMode(this));
         paintChipGroup(new int[]{R.id.theme_auto, R.id.theme_light, R.id.theme_dark}, Theme.mode(this));
+        paintSegments();
         // 强调色选中环
         LinearLayout row = findViewById(R.id.accent_row);
         int sel = WidgetPrefs.accentIndex(this);
@@ -338,12 +319,6 @@ public class PreviewActivity extends Activity {
             }
             dot.setBackground(ring);
         }
-    }
-
-    /** 浅色模式下这些块的底色要换（深色底在白页面上会脏） */
-    private int presetBg(boolean on) {
-        if (on) return R.drawable.bg_preset_on;
-        return Theme.isDark(this) ? R.drawable.bg_preset : R.drawable.bg_preset_light;
     }
 
     private int chipBg(boolean on) {
@@ -389,70 +364,14 @@ public class PreviewActivity extends Activity {
         });
     }
 
-    private static final int[] PRESET_IDS = {
-            R.id.preset_default, R.id.preset_glass,
-            R.id.preset_min, R.id.preset_high
-    };
-
-    /** 当前选中的预设（-1 = 自定义） */
-    private int activePreset = 0;
-
-    private void presetStyle(final int index, int alpha, final int cardAlpha, final int font,
-                             final int radius, final int rootRadius, final int cardH) {
-        final int id = PRESET_IDS[index];
-        findViewById(id).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showPresetSelection(index);
-                applyStyle(alpha, cardAlpha, font, radius, rootRadius, cardH);
-            }
-        });
-    }
-
-    private View.OnClickListener refreshModeListener(final int mode) {
-        return new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                WidgetPrefs.setRefreshMode(PreviewActivity.this, mode);
-                showRefreshMode();
-                markDirty();
-            }
-        };
-    }
-
-    private void showRefreshMode() {
-        int mode = WidgetPrefs.refreshMode(this);
-        paintChipGroup(new int[]{R.id.refresh_smart, R.id.refresh_saver, R.id.refresh_frequent}, mode);
-        TextView hint = findViewById(R.id.txt_refresh_hint);
-        String text;
-        if (mode == WidgetPrefs.REFRESH_SMART) {
-            text = "上下课、零点刷新；有课进行中时每分钟刷新，倒计时和进度条会动。没课时不耗电。";
-        } else if (mode == WidgetPrefs.REFRESH_SAVER) {
-            text = "只在上下课和零点刷新，最省电。课中倒计时和进度条不会动。";
-        } else {
-            text = "每分钟刷新一次，最实时，耗电也最多。";
-        }
-        hint.setText(text + "\n小米/澎湃OS 需给本 App 开「自启动」和「无限制后台」才能稳定定时。");
-    }
-
-    private void showPresetSelection(int index) {
-        activePreset = index;
-        for (int i = 0; i < PRESET_IDS.length; i++) {
-            TextView tv = findViewById(PRESET_IDS[i]);
-            boolean on = (i == index);
-            tv.setBackgroundResource(presetBg(on));
-            tv.setTextColor(on ? onAccentText() : Theme.textSecondary(this));
-        }
-    }
-
     private void applyStyle(int alpha, int cardAlpha, int font, int radius, int rootRadius, int cardH) {
         rowAlpha.bar.setProgress(alpha);
         rowCardAlpha.bar.setProgress(cardAlpha);
         rowFont.bar.setProgress(font - MIN_FONT);
-        rowCardRadius.bar.setProgress(radius);
-        rowRootRadius.bar.setProgress(rootRadius);
-        rowCardHeight.bar.setProgress(cardH <= 0 ? 0 : cardH - 40 + 1);
-        showPresetSelection(activePreset);
+        chosenCardRadius = nearestIndex(CARD_RADII, radius);
+        chosenRootRadius = nearestIndex(ROOT_RADII, rootRadius);
+        chosenCardHeight = nearestIndex(CARD_HEIGHTS, cardH);
+        paintSegments();
         saveAndRender();
     }
 
@@ -460,14 +379,52 @@ public class PreviewActivity extends Activity {
      * 拖滑杆时的即时反馈：把值写进 prefs（预览要通过它渲染），但**不刷新桌面组件** ——
      * 桌面只在点「保存」时更新，这就是「改完要保存才生效」的实现方式。
      */
+    /** 找数组里最接近的档位下标 */
+    private static int nearestIndex(int[] arr, int v) {
+        int best = 0;
+        int diff = Integer.MAX_VALUE;
+        for (int i = 0; i < arr.length; i++) {
+            int d = Math.abs(arr[i] - v);
+            if (d < diff) { diff = d; best = i; }
+        }
+        return best;
+    }
+
+    interface Setter {
+        void set(int index, int value);
+    }
+
+    /** 绑定一组分段：点击写值并立刻重绘 */
+    private void bindSegments(int[] ids, final int[] values, final Setter setter) {
+        for (int i = 0; i < ids.length; i++) {
+            final int idx = i;
+            findViewById(ids[i]).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    setter.set(idx, values[idx]);
+                    markDirty();
+                    paintSegments();
+                    saveAndRender();
+                }
+            });
+        }
+    }
+
+    /** 重画三组分段的选中态 */
+    private void paintSegments() {
+        paintChipGroup(new int[]{R.id.r_root_0, R.id.r_root_1, R.id.r_root_2, R.id.r_root_3}, chosenRootRadius);
+        paintChipGroup(new int[]{R.id.r_card_0, R.id.r_card_1, R.id.r_card_2, R.id.r_card_3}, chosenCardRadius);
+        paintChipGroup(new int[]{R.id.h_auto, R.id.h_min, R.id.h_mid, R.id.h_max}, chosenCardHeight);
+    }
+
     private void saveAndRender() {
         WidgetPrefs.save(this,
                 MIN_ALPHA + rowAlpha.bar.getProgress(),
                 rowCardAlpha.bar.getProgress(),
                 MIN_FONT + rowFont.bar.getProgress(),
-                rowCardRadius.bar.getProgress(),
-                rowRootRadius.bar.getProgress(),
-                cardHeightOf(rowCardHeight.bar.getProgress()),
+                CARD_RADII[chosenCardRadius],
+                ROOT_RADII[chosenRootRadius],
+                CARD_HEIGHTS[chosenCardHeight],
                 WidgetPrefs.showUpcoming(this),
                 WidgetPrefs.showPlace(this),
                 WidgetPrefs.showTeacher(this));
@@ -539,11 +496,9 @@ public class PreviewActivity extends Activity {
     private void render() {
         rowAlpha.value.setText((MIN_ALPHA + rowAlpha.bar.getProgress()) + "%");
         rowCardAlpha.value.setText(rowCardAlpha.bar.getProgress() + "%");
-        int cardH = cardHeightOf(rowCardHeight.bar.getProgress());
-        rowCardHeight.value.setText(cardH == 0 ? "自动" : cardH + " dp");
+
         rowFont.value.setText((MIN_FONT + rowFont.bar.getProgress()) + "%");
-        rowCardRadius.value.setText(rowCardRadius.bar.getProgress() + " dp");
-        rowRootRadius.value.setText(rowRootRadius.bar.getProgress() + " dp");
+
 
         List<Event> events = EventStore.load(this);
         if (events.isEmpty()) {

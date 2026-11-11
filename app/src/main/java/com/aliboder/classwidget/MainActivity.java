@@ -156,7 +156,7 @@ public class MainActivity extends Activity {
             final int which = i;
             if (i > 0) {
                 View div = new View(this);
-                div.setBackgroundColor(0x14FFFFFF);
+                div.setBackgroundColor(Theme.stroke(this));
                 LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, 1);
                 div.setLayoutParams(dlp);
@@ -621,6 +621,11 @@ public class MainActivity extends Activity {
     private int cTextSecondary() { return Theme.textSecondary(this); }
     private int cTextTertiary() { return Theme.textTertiary(this); }
     private int cAccent() { return WidgetPrefs.accentColor(this); }
+
+    /** 强调色 + 指定不透明度（0-255），用于「现在」标线这类半透明装饰 */
+    private int accent(int a) {
+        return (a << 24) | (WidgetPrefs.accentColor(this) & 0x00FFFFFF);
+    }
     private int cTagCourse() { return Theme.isDark(this) ? 0xFF9FE8D1 : 0xFF0E8C6D; }
     private int cTagExam() { return Theme.isDark(this) ? 0xFFFFB4AB : 0xFFC62828; }
     private int cTagSchedule() { return Theme.isDark(this) ? 0xFFB8BFCB : 0xFF5A636D; }
@@ -699,7 +704,7 @@ public class MainActivity extends Activity {
         row.addView(dot);
 
         View line = new View(this);
-        line.setBackgroundColor(0x593FD3AC);
+        line.setBackgroundColor(accent(0x59));
         line.setLayoutParams(new LinearLayout.LayoutParams(0, rpx(2), 1f));
         row.addView(line);
 
@@ -729,7 +734,7 @@ public class MainActivity extends Activity {
         boolean past = now >= e.end;
 
         FrameLayout wrap = new FrameLayout(this);
-        wrap.setBackgroundResource(R.drawable.card_tl);
+        wrap.setBackgroundResource(Theme.isDark(this) ? R.drawable.card_tl : R.drawable.card_tl_light);
         LinearLayout.LayoutParams wlp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         wlp.leftMargin = rpx(32);
@@ -942,7 +947,7 @@ public class MainActivity extends Activity {
     private View diagnosticCard(List<Event> events) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setBackgroundResource(R.drawable.card_tl);
+        box.setBackgroundResource(Theme.isDark(this) ? R.drawable.card_tl : R.drawable.card_diag_light);
         box.setPadding(rpx(24), rpx(20), rpx(24), rpx(20));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
