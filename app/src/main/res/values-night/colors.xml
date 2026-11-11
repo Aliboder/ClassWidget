@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色：同名覆盖 values/colors.xml -->
+    <color name="page_bg">#FF0A0B0D</color>
+    <color name="surface">#FF14171B</color>
+    <color name="surface_high">#FF1B1F24</color>
+    <color name="stroke">#1FFFFFFF</color>
+
+    <color name="text_primary">#FFF2F5F8</color>
+    <color name="text_secondary">#FFA8B0BC</color>
+    <color name="text_tertiary">#FF6B7480</color>
+
+    <color name="accent">#FF3FD3AC</color>
+    <color name="accent_dim">#333FD3AC</color>
+    <color name="danger">#FFE5484D</color>
+    <color name="sheet">#FF16191D</color>
+
+    <color name="tag_course">#FF9FE8D1</color>
+    <color name="tag_exam">#FFFFB4AB</color>
+    <color name="tag_schedule">#FFB8BFCB</color>
+
+    <color name="widget_bg">#EE15151A</color>
+    <color name="widget_text">#FFF2F4F8</color>
+    <color name="widget_text_dim">#8D95A3</color>
+    <color name="widget_text_mid">#B8BFCB</color>
+</resources>

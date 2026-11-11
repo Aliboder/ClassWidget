@@ -2,9 +2,9 @@
 <ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="#22FFFFFF">
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="?attr/colorSurfaceHigh" />
+            <solid android:color="@color/surface_high" />
             <corners android:radius="@dimen/r_md" />
-            <stroke android:width="1px" android:color="?attr/colorStroke" />
+            <stroke android:width="1px" android:color="@color/stroke" />
         </shape>
     </item>
 </ripple>

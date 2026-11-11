@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorPageBg"
+    android:background="@color/page_bg"
     android:fillViewport="true"
     android:scrollbars="none">
 
@@ -33,7 +33,7 @@
                     android:layout_height="wrap_content"
                     android:letterSpacing="-0.02"
                     android:text="课表组件"
-                    android:textColor="?attr/colorTextPrimary"
+                    android:textColor="@color/text_primary"
                     android:textSize="24sp"
                     android:textStyle="bold" />
 
@@ -43,7 +43,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="3dp"
                     android:text="桌面课表"
-                    android:textColor="?attr/colorTextTertiary"
+                    android:textColor="@color/text_tertiary"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -99,7 +99,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="今天 · 11月10日 周二"
-                    android:textColor="?attr/colorTextSecondary"
+                    android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
 
                 <TextView
@@ -112,7 +112,7 @@
                     android:paddingEnd="8dp"
                     android:paddingBottom="2dp"
                     android:text="进行中"
-                    android:textColor="?attr/colorAccent"
+                    android:textColor="@color/accent"
                     android:textSize="11sp"
                     android:visibility="gone" />
             </LinearLayout>
@@ -124,7 +124,7 @@
                 android:layout_marginTop="10dp"
                 android:letterSpacing="-0.01"
                 android:text="今天没有课"
-                android:textColor="?attr/colorTextPrimary"
+                android:textColor="@color/text_primary"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
@@ -135,7 +135,7 @@
                 android:layout_marginTop="6dp"
                 android:lineSpacingExtra="3dp"
                 android:text="导入课表后，这里显示今天的安排"
-                android:textColor="?attr/colorTextTertiary"
+                android:textColor="@color/text_tertiary"
                 android:textSize="13sp" />
 
             <!-- 无数据时才出现的主操作 -->
@@ -168,7 +168,7 @@
                     android:background="@drawable/bg_btn_ghost"
                     android:gravity="center"
                     android:text="输入配对码"
-                    android:textColor="?attr/colorTextSecondary"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -189,7 +189,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="怎么加到桌面"
-                android:textColor="?attr/colorTextSecondary"
+                android:textColor="@color/text_secondary"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -199,7 +199,7 @@
                 android:layout_marginTop="10dp"
                 android:lineSpacingExtra="6dp"
                 android:text="1&#160;&#160;&#160;长按桌面空白处，选「小组件」"
-                android:textColor="?attr/colorTextTertiary"
+                android:textColor="@color/text_tertiary"
                 android:textSize="13sp" />
 
             <TextView
@@ -207,7 +207,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="2&#160;&#160;&#160;找到「课表组件」，拖到桌面"
-                android:textColor="?attr/colorTextTertiary"
+                android:textColor="@color/text_tertiary"
                 android:textSize="13sp" />
 
             <TextView
@@ -215,7 +215,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="3&#160;&#160;&#160;回到这里导入课表，桌面自动更新"
-                android:textColor="?attr/colorTextTertiary"
+                android:textColor="@color/text_tertiary"
                 android:textSize="13sp" />
         </LinearLayout>
 
@@ -228,7 +228,7 @@
             android:layout_marginBottom="@dimen/sp_2"
             android:letterSpacing="0.06"
             android:text="日程"
-            android:textColor="?attr/colorTextTertiary"
+            android:textColor="@color/text_tertiary"
             android:textSize="11sp"
             android:textStyle="bold" />
 
